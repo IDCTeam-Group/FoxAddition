@@ -1,18 +1,44 @@
-# FoxAddition
-An anti-cheat plugin designed to prevent specific types of hacks. It can be used in conjunction with other anti-cheat plugins, enhancing hack detection on your server with additional checks.
+# FoxAddition - Folia Compatible Fork
+An anti-cheat plugin designed to prevent specific types of hacks. This fork adds full Folia compatibility, MiniMessage support, and critical bug fixes.
 
-### FEATURES
-- **Support for most versions:** FoxAddition aims to be designed to support Spigot servers (and forks) from older versions like 1.7.2 to the latest versions of Minecraft. Compatibility with FOLIA is unavailable for the moment; this can be added in a future.
-- **Extensive and customizable configuration:** We strive to give users the ability to create their configuration freely, allowing them to edit possible values. Users can even disable checks in specific worlds. You can review the documentation section for a preview of the files.
-- **Support for Bedrock players:** The plugin is designed to be compatible with and detect Bedrock players (if your server uses GeyserMC). This functions properly when Floodgate is detected on your server, allowing you to enable or disable checks for specific editions. If Floodgate is not in use, the player in Bedrock will be treated if it were Java, and the plugin will continue to function and detect accordingly. In versions 1.1.5+ of FoxAddition you can configure a prefix option to determine a bedrock player, this can be perfect in case you configured Floodgate in a Bungeecord.
-- **Logging system:** Log all alerts received when a player fails any checks; this is stored in the 'logs' folder within the plugin folder with a txt file. This is a feature that can be activated or deactivated in the configuration. You can check 'Some information.' below for more details.
-- **Compatibility with various plugins:** The plugin is compatible with other plugins to provide fixes for false positives or enhance your experience with FoxAddition. This is automatically detected upon plugin initiation, and it can be deactivated in the configuration in case of any issues. Below, you will find a list of plugins currently compatible with FoxAddition and their respective uses.
-  - **ExecutableItems** - Used to fix some false flags in some checks in certain types of attributes/enchant/items. [Check this plugin here](https://www.spigotmc.org/resources/77578/)
-  - **DiscordSRV** - Used to send alerts in a specify discord channel with your bot in this plugin, you can change the messages in the configuration file. [Check this plugin here](https://www.spigotmc.org/resources/18494/)
-  - **PlaceholderAPI** - Used to allow to the plugin in use placeholders in any part, like in the list of commands to execute in certain vls or in the messages. [Check this plugin here](https://www.spigotmc.org/resources/6245/)
-  - **ProtocolLib** - Used to allow the usage of packets to use in checks that only works with this plugin and add some additional checks. *(Probably in a future, this can be a requeriment to improve the stability and performance of the anti-cheat in using packets.)* [Check this plugin here](https://www.spigotmc.org/resources/1997/)
-  - **VeinMiner** - Used to fix some false flags in some checks when the mode of this plugin is enabled. [Check this plugin here](https://www.spigotmc.org/resources/12038/)
+## ✨ New in v1.2.3-folia-fix
 
-**Visit in**:
+### 🔧 Fixed
+- **Folia Compatibility** - All 12 packet event types now use region scheduler (fixes "PositionEvent may only be triggered synchronously" spam)
+- **ClassCastException Crash** - Fixed `getPing()` method passing UUID instead of Player object (fixes crashes on death/actions)
+- **Floodgate Compatibility** - Removed deprecated `LINUX` enum
+- **Bukkit/Spigot/Paper Fallback** - Automatic server detection for compatibility with both Folia and traditional Paper/Spigot
+- **Plugin Loading** - Added `folia-supported: true` to plugin.yml
+
+### ✨ Added
+- **MiniMessage Support** - Dual format support with automatic detection (`&a` legacy codes and `<green>` modern tags with hex colors)
+- **Gradle Build System** - Complete build setup with all dependencies
+
+### 📦 Installation
+1. Download `FoxAddition-Folia.jar` from [Releases](https://github.com/swift-dart/FoxAddition/releases)
+2. Place in `plugins/` folder
+3. Requires: PacketEvents 2.11.0+
+
+### ✅ Tested On
+- ✅ Folia 1.21.8
+- ✅ Paper 1.21.3
+- ✅ Spigot 1.21+
+
+---
+
+## FEATURES
+- **Folia Support:** Full compatibility with Folia's multi-threaded regionized server architecture
+- **Support for most versions:** FoxAddition aims to support Spigot servers (and forks) from older versions like 1.7.2 to the latest versions of Minecraft
+- **MiniMessage & Legacy Colors:** Use modern `<green>`, `<#85bb65>` hex colors, or classic `&a` codes
+- **Extensive and customizable configuration:** Create your configuration freely, edit values, and disable checks in specific worlds
+- **Support for Bedrock players:** Compatible with GeyserMC. Works with Floodgate to enable or disable checks for specific editions
+- **Logging system:** Log all alerts in the 'logs' folder within the plugin folder as txt files
+- **Compatibility with various plugins:** Works with ExecutableItems, DiscordSRV, PlaceholderAPI, ProtocolLib, VeinMiner
+
+**Original Plugin**:
 - [SpigotMC.org](https://www.spigotmc.org/resources/111260/)
 - [Modrinth.com](https://modrinth.com/plugin/foxaddition)
+
+**This Fork**:
+- [GitHub Repository](https://github.com/swift-dart/FoxAddition)
+- [Report Issues](https://github.com/swift-dart/FoxAddition/issues)
