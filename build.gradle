@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+}
+
+group = 'zoruafan'
+version = '1.2.3-folia-fix'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://repo.codemc.io/repository/maven-releases/' }
+    maven { url = 'https://repo.opencollab.dev/main/' }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT'
+    compileOnly 'com.github.retrooper:packetevents-spigot:2.11.0'
+    compileOnly 'org.geysermc.floodgate:api:2.2.0-SNAPSHOT'
+    
+    // MiniMessage for modern text formatting
+    implementation 'net.kyori:adventure-text-minimessage:4.17.0'
+    
+    compileOnly 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+    compileOnly 'com.google.code.gson:gson:2.10.1'
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    archiveFileName = 'FoxAddition-Folia.jar'
+}
+
+processResources {
+    filteringCharset = 'UTF-8'
+}

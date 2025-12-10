@@ -1,0 +1,32 @@
+name: FoxAddition
+version: 1.2.3-folia-fix
+main: zoruafan.foxaddition.FoxAddition
+api-version: 1.13
+folia-supported: true
+authors: [NovaCraft254]
+description: An anti-cheat plugin with Folia compatibility
+website: https://www.idcteam.xyz/
+depend: [packetevents]
+softdepend: [ProtocolLib, PlaceholderAPI, DiscordSRV, VeinMiner, ExecutableItems, Floodgate]
+
+commands:
+  foxaddition:
+    description: Main FoxAddition command
+    aliases: [fa, foxac, fac]
+    usage: /<command> [reload|verbose|version|help]
+    permission: foxaddition.command
+    permission-message: You don't have permission to use this command.
+
+permissions:
+  foxaddition.command:
+    description: Access to FoxAddition commands
+    default: op
+  foxaddition.bypass:
+    description: Bypass all anticheat checks
+    default: false
+  foxaddition.alerts:
+    description: Receive anticheat alerts
+    default: op
+  foxaddition.verbose:
+    description: Toggle verbose mode
+    default: op

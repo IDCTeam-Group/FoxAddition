@@ -53,116 +53,164 @@ public class FoxPacketListener extends FoliaScheduler implements PacketListener 
     	    final Optional<Boolean> creativeMode = a.isInCreativeMode();
     	    final Optional<Float> flySpeed = a.getFlySpeed();
     	    final Optional<Float> walkSpeed = a.getWalkSpeed();
-		    AbilitiesEvent abi = new AbilitiesEvent(e, flying, godMode, flightAllowed, creativeMode, flySpeed, walkSpeed);
-		    Bukkit.getServer().getPluginManager().callEvent(abi);
-		    if (abi.isCancelled()) { ev.setCancelled(true); }
+		    final Player finalPlayer = e;
+		    final PacketReceiveEvent finalEv = ev;
+		    e.getScheduler().run(pl, task -> {
+			    AbilitiesEvent abi = new AbilitiesEvent(finalPlayer, flying, godMode, flightAllowed, creativeMode, flySpeed, walkSpeed);
+			    Bukkit.getServer().getPluginManager().callEvent(abi);
+			    if (abi.isCancelled()) { finalEv.setCancelled(true); }
+		    }, null);
         } else if (p == PacketType.Play.Client.PLAYER_DIGGING) {
         	WrapperPlayClientPlayerDigging d = new WrapperPlayClientPlayerDigging(ev);
         	Vector3i b = d.getBlockPosition();
     		int x = b.getX();
     		int y = b.getY();
     		int z = b.getZ();
-        	Vector3i bP = new Vector3i(x, y, z);
-        	BlockFace f = d.getBlockFace();
-        	DiggingAction a = d.getAction();
-        	BlockDigEvent bde = new BlockDigEvent(e, a, bP, f);
-	        Bukkit.getServer().getPluginManager().callEvent(bde);
-	        if (bde.isCancelled()) { ev.setCancelled(true); }
+        	final Vector3i bP = new Vector3i(x, y, z);
+        	final BlockFace f = d.getBlockFace();
+        	final DiggingAction a = d.getAction();
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+	        	BlockDigEvent bde = new BlockDigEvent(finalPlayer, a, bP, f);
+		        Bukkit.getServer().getPluginManager().callEvent(bde);
+		        if (bde.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if (p == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) {
         	WrapperPlayClientPlayerBlockPlacement bp = new WrapperPlayClientPlayerBlockPlacement(ev);
         	Vector3i b = bp.getBlockPosition();
     		int x = b.getX();
     		int y = b.getY();
     		int z = b.getZ();
-        	Vector3i bP = new Vector3i(x, y, z);
-        	BlockFace f = bp.getFace();
-        	long tm = bp.getSequence();
-        	InteractionHand hand = bp.getHand();
-        	BlockPlaceEvent bpe = new BlockPlaceEvent(e, bP, f, tm, hand);
-        	Bukkit.getServer().getPluginManager().callEvent(bpe);
-        	if (bpe.isCancelled()) { ev.setCancelled(true); }
+        	final Vector3i bP = new Vector3i(x, y, z);
+        	final BlockFace f = bp.getFace();
+        	final long tm = bp.getSequence();
+        	final InteractionHand hand = bp.getHand();
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+	        	BlockPlaceEvent bpe = new BlockPlaceEvent(finalPlayer, bP, f, tm, hand);
+	        	Bukkit.getServer().getPluginManager().callEvent(bpe);
+	        	if (bpe.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if (p == PacketType.Play.Client.KEEP_ALIVE) {
         	WrapperPlayClientKeepAlive k = new WrapperPlayClientKeepAlive(ev);
-        	long id = k.getId();
-        	KeepAliveEvent kae = new KeepAliveEvent(e, id);
-	    	Bukkit.getServer().getPluginManager().callEvent(kae);
-	    	if (kae.isCancelled()) { ev.setCancelled(true); }
+        	final long id = k.getId();
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+	        	KeepAliveEvent kae = new KeepAliveEvent(finalPlayer, id);
+		    	Bukkit.getServer().getPluginManager().callEvent(kae);
+		    	if (kae.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if (p == PacketType.Play.Client.HELD_ITEM_CHANGE) {
         	WrapperPlayClientHeldItemChange hi = new WrapperPlayClientHeldItemChange(ev);
-        	int slot = hi.getSlot();
-	    	HeldItemEvent hie = new HeldItemEvent(e, slot);
-	    	Bukkit.getServer().getPluginManager().callEvent(hie);
-	    	if (hie.isCancelled()) { ev.setCancelled(true); }
+        	final int slot = hi.getSlot();
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+		    	HeldItemEvent hie = new HeldItemEvent(finalPlayer, slot);
+		    	Bukkit.getServer().getPluginManager().callEvent(hie);
+		    	if (hie.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if (p == PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION) {
         	WrapperPlayClientPlayerPositionAndRotation po = new WrapperPlayClientPlayerPositionAndRotation(ev);
-        	boolean onGround = po.isOnGround();
+        	final boolean onGround = po.isOnGround();
         	Vector3d X = po.getPosition();
-        	double xP = X.getX();
-        	double yP = X.getY();
-        	double zP = X.getZ();
-        	float wP = po.getYaw();
-        	float pP = po.getPitch();
-        	PositionType ty = PositionType.POSITION_ROTATION;
-        	boolean iF = WrapperPlayClientPlayerFlying.isFlying(ev.getPacketType());
-	    	PositionEvent pos = new PositionEvent(e, xP, yP, zP, wP, pP, onGround, iF, ev, ty);
-	    	Bukkit.getServer().getPluginManager().callEvent(pos);
-	    	if (pos.isCancelled()) { ev.setCancelled(true); }
-        	LookEvent loe = new LookEvent(e, (float) wP, (float) pP);
-           	Bukkit.getServer().getPluginManager().callEvent(loe);
-        	if (loe.isCancelled()) { ev.setCancelled(true); }
+        	final double xP = X.getX();
+        	final double yP = X.getY();
+        	final double zP = X.getZ();
+        	final float wP = po.getYaw();
+        	final float pP = po.getPitch();
+        	final PositionType ty = PositionType.POSITION_ROTATION;
+        	final boolean iF = WrapperPlayClientPlayerFlying.isFlying(ev.getPacketType());
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+		    	PositionEvent pos = new PositionEvent(finalPlayer, xP, yP, zP, wP, pP, onGround, iF, finalEv, ty);
+		    	Bukkit.getServer().getPluginManager().callEvent(pos);
+		    	if (pos.isCancelled()) { finalEv.setCancelled(true); }
+	        	LookEvent loe = new LookEvent(finalPlayer, wP, pP);
+	           	Bukkit.getServer().getPluginManager().callEvent(loe);
+	        	if (loe.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if (p == PacketType.Play.Client.PLAYER_POSITION) {
         	WrapperPlayClientPlayerPosition po = new WrapperPlayClientPlayerPosition(ev);
-        	boolean onGround = po.isOnGround();
+        	final boolean onGround = po.isOnGround();
         	Vector3d X = po.getPosition();
-        	double xP = X.getX();
-        	double yP = X.getY();
-        	double zP = X.getZ();
-        	float wP = e.getLocation().getYaw();
-        	float pP = e.getLocation().getPitch();
-        	PositionType ty = PositionType.POSITION;
-        	boolean iF = WrapperPlayClientPlayerFlying.isFlying(ev.getPacketType());
-	    	PositionEvent pos = new PositionEvent(e, xP, yP, zP, wP, pP, onGround, iF, ev, ty);
-	    	Bukkit.getServer().getPluginManager().callEvent(pos);
-	    	if (pos.isCancelled()) { ev.setCancelled(true); }
+        	final double xP = X.getX();
+        	final double yP = X.getY();
+        	final double zP = X.getZ();
+        	final float wP = e.getLocation().getYaw();
+        	final float pP = e.getLocation().getPitch();
+        	final PositionType ty = PositionType.POSITION;
+        	final boolean iF = WrapperPlayClientPlayerFlying.isFlying(ev.getPacketType());
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+		    	PositionEvent pos = new PositionEvent(finalPlayer, xP, yP, zP, wP, pP, onGround, iF, finalEv, ty);
+		    	Bukkit.getServer().getPluginManager().callEvent(pos);
+		    	if (pos.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if (p == PacketType.Play.Client.INTERACT_ENTITY) {
         	WrapperPlayClientInteractEntity ie = new WrapperPlayClientInteractEntity(ev);
-        	int id = ie.getEntityId();
-        	InteractAction ac = ie.getAction();
-        	InteractionHand ha = ie.getHand();
-        	Optional<Vector3f> ta = ie.getTarget();
-        	Optional<Boolean> sn = ie.isSneaking();
-        	InteractEntityEvent iee = new InteractEntityEvent(e, id, ac, ha, ta, sn);
-	    	Bukkit.getServer().getPluginManager().callEvent(iee);
-	    	if (iee.isCancelled()) { ev.setCancelled(true); }
+        	final int id = ie.getEntityId();
+        	final InteractAction ac = ie.getAction();
+        	final InteractionHand ha = ie.getHand();
+        	final Optional<Vector3f> ta = ie.getTarget();
+        	final Optional<Boolean> sn = ie.isSneaking();
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+	        	InteractEntityEvent iee = new InteractEntityEvent(finalPlayer, id, ac, ha, ta, sn);
+		    	Bukkit.getServer().getPluginManager().callEvent(iee);
+		    	if (iee.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if(p == PacketType.Play.Client.STEER_VEHICLE) {
         	WrapperPlayClientSteerVehicle sv = new WrapperPlayClientSteerVehicle(ev);
-        	float fo = sv.getForward();
-        	float si = sv.getSideways();
-        	byte fl = sv.getFlags();
-        	SteerVehicleEvent sve = new SteerVehicleEvent(e, fo, si, fl);
-	    	Bukkit.getServer().getPluginManager().callEvent(sve);
-	    	if (sve.isCancelled()) { ev.setCancelled(true); }
+        	final float fo = sv.getForward();
+        	final float si = sv.getSideways();
+        	final byte fl = sv.getFlags();
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+	        	SteerVehicleEvent sve = new SteerVehicleEvent(finalPlayer, fo, si, fl);
+		    	Bukkit.getServer().getPluginManager().callEvent(sve);
+		    	if (sve.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if(p == PacketType.Play.Client.ENTITY_ACTION) {
         	WrapperPlayClientEntityAction ea = new WrapperPlayClientEntityAction(ev);
-        	int eI = ea.getEntityId();
-        	Action ac = ea.getAction();
-        	int jB = ea.getJumpBoost();
-        	EntityActionEvent eae = new EntityActionEvent(e, eI, ac, jB);
-	    	Bukkit.getServer().getPluginManager().callEvent(eae);
-	    	if (eae.isCancelled()) { ev.setCancelled(true); }
+        	final int eI = ea.getEntityId();
+        	final Action ac = ea.getAction();
+        	final int jB = ea.getJumpBoost();
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+	        	EntityActionEvent eae = new EntityActionEvent(finalPlayer, eI, ac, jB);
+		    	Bukkit.getServer().getPluginManager().callEvent(eae);
+		    	if (eae.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if(p == PacketType.Play.Client.ANIMATION) {
         	WrapperPlayClientAnimation an = new WrapperPlayClientAnimation(ev);
-        	InteractionHand ih = an.getHand();
-        	AnimationEvent eae = new AnimationEvent(e, ih);
-        	Bukkit.getServer().getPluginManager().callEvent(eae);
-        	if (eae.isCancelled()) { ev.setCancelled(true); }
+        	final InteractionHand ih = an.getHand();
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+	        	AnimationEvent eae = new AnimationEvent(finalPlayer, ih);
+	        	Bukkit.getServer().getPluginManager().callEvent(eae);
+	        	if (eae.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
         } else if (p == PacketType.Play.Client.PLAYER_ROTATION) {
         	WrapperPlayClientPlayerRotation pr = new WrapperPlayClientPlayerRotation(ev);
-        	double pitch = pr.getPitch();
-        	double yaw = pr.getYaw();
-        	LookEvent loe = new LookEvent(e, (float) yaw, (float) pitch);
-           	Bukkit.getServer().getPluginManager().callEvent(loe);
-        	if (loe.isCancelled()) { ev.setCancelled(true); }
+        	final double pitch = pr.getPitch();
+        	final double yaw = pr.getYaw();
+        	final Player finalPlayer = e;
+        	final PacketReceiveEvent finalEv = ev;
+        	e.getScheduler().run(pl, task -> {
+	        	LookEvent loe = new LookEvent(finalPlayer, (float) yaw, (float) pitch);
+	           	Bukkit.getServer().getPluginManager().callEvent(loe);
+	        	if (loe.isCancelled()) { finalEv.setCancelled(true); }
+        	}, null);
     	}
         else return;
     }
