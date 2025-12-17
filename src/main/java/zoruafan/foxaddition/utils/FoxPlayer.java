@@ -40,13 +40,24 @@ public class FoxPlayer implements Listener {
     
     public void disconnectPlayer(Player e, Component reason) {
     	if (kickTC.containsKey(e) && System.currentTimeMillis()<kickTC.get(e)) return;
+    	if (!api.getPlugin().isEnabled()) return;
     	kickTC.put(e, System.currentTimeMillis()+200);
     	try {
     		User u = (User) e;
     		u.sendPacket(new WrapperPlayServerDisconnect(reason));
-            if (e != null) { FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected")); }
+            if (e != null) { 
+            	if (FoliaScheduler.isFolia()) {
+            		e.getScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"), null);
+            	} else {
+            		FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"));
+            	}
+            }
         } catch (Exception p) {
-        	FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"));
+        	if (FoliaScheduler.isFolia()) {
+        		e.getScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"), null);
+        	} else {
+        		FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"));
+        	}
         }
     }
     

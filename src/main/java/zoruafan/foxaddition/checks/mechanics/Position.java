@@ -50,7 +50,11 @@ public class Position extends FoxPlayer implements Listener {
         if ((e.isInsideVehicle() && !e.getVehicle().isValid()) && api.getFiles().getAC().getBoolean(p+".invalidvehicle", true)) {
         	flag(false, e, "Moved in invalid vehicle!", "Mechanics [Position]", "[inside:"+e.isInsideVehicle()+"] [isValid:"+e.getVehicle().isValid()+"]", 0, "mechanics");
         	ev.setCancelled(true);
-        	e.teleport(oldL);
+        	if (FoliaScheduler.isFolia()) {
+        		e.teleportAsync(oldL);
+        	} else {
+        		e.teleport(oldL);
+        	}
         	try { e.getVehicle().eject(); } catch (Exception p) {}
         	return;
         } else if ((!e.isValid() && !e.isDead()) && api.getFiles().getAC().getBoolean(p+".invalidmove", true)) {
@@ -78,7 +82,11 @@ public class Position extends FoxPlayer implements Listener {
         	if(api.getFiles().getAC().getBoolean(p+".pullback.ignore_velocity", true)) { if(e.getVelocity().getX() > 0.0 || e.getVelocity().getY() > 0.0 || e.getVelocity().getZ() > 0.0) { de = false; } }
         	if(de) {
 	        	flag(true, e, "Detected using PullBack!", "Mechanics [Position]", "[Y:"+oldY+"/"+y+"] [diff:"+(oldY-y)+"]", 0, "mechanics");
-	        	FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.teleport(oldL));
+	        	if (FoliaScheduler.isFolia()) {
+	        		FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.teleportAsync(oldL));
+	        	} else {
+	        		FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.teleport(oldL));
+	        	}
 	        	ev.setCancelled(true);
 	        	return;
         	}
@@ -109,7 +117,11 @@ public class Position extends FoxPlayer implements Listener {
             double diffY = oldY+api.getFiles().getAC().getInt(p+".checks.fast.y", 45) - y;
             double diffZ = oldZ+api.getFiles().getAC().getInt(p+".checks.fast.z", 45) - z;
         	flag(true, e, "Sending fast movement in a direction!", "Mechanics [Position]", "[X:"+diffX+", Y:"+diffY+", Z:"+diffZ+"]", api.getFiles().getAC().getInt(p+".checks.fast.vls", 1), "mechanics");
-        	FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.teleport(oldL));
+        	if (FoliaScheduler.isFolia()) {
+        		FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.teleportAsync(oldL));
+        	} else {
+        		FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.teleport(oldL));
+        	}
         	if(api.getFiles().getAC().getBoolean(p+".checks.fast.kick", false)) timeOut(e);
         	return;
     	} else if (((pitch > 90 || pitch < -90) || !isNaN(pitch) || Double.isInfinite(pitch)) || (!(aYaw > 0.0 || aYaw < 360.0) || !isNaN(aYaw) || Double.isInfinite(aYaw)) && !iAD(e, "mechanics", p+".checks.yawpitch", true)) {

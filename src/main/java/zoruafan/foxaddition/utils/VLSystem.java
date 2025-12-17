@@ -70,6 +70,7 @@ public class VLSystem implements Listener {
     
     public void executeCommands(Player e, List<String> commands) {
         if (!e.isOnline()) return;
+        if (!api.getPlugin().isEnabled()) return;
         for (String originalCommand : commands) {
             String command = originalCommand;
             if (e != null) {

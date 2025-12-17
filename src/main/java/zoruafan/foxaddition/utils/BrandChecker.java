@@ -38,6 +38,7 @@ public class BrandChecker extends FoxPlayer implements Listener, PluginMessageLi
             brand = originalMessage.trim();
             if (!isAllowed(brand)) {
                 List<String> commands = file.getStringList(p+".commands");
+                if (!api.getPlugin().isEnabled()) return;
                 for (String command : commands) {
                 	if(command.equals("[close]")) { closeConnection(e); return; }
                 	String cmd_1 = command.replace("{player}", e.getName()).replace("{brand}", brand);
