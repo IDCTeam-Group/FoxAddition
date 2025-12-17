@@ -40,6 +40,7 @@ public class FoxPlayer implements Listener {
     
     public void disconnectPlayer(Player e, Component reason) {
     	if (kickTC.containsKey(e) && System.currentTimeMillis()<kickTC.get(e)) return;
+    	if (!api.getPlugin().isEnabled()) return;
     	kickTC.put(e, System.currentTimeMillis()+200);
     	try {
     		User u = (User) e;
