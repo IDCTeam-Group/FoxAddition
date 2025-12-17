@@ -49,6 +49,9 @@ public class FoxPacketListener extends FoliaScheduler implements PacketListener 
     }
     
     private void runSync(Player player, PacketReceiveEvent ev, Runnable task) {
+        if (!pl.isEnabled()) {
+            return;
+        }
         if (IS_FOLIA) {
             player.getScheduler().run(pl, t -> task.run(), null);
         } else {
