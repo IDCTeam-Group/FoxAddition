@@ -1,10 +1,10 @@
 name: FoxAddition
-version: 1.2.3-folia-fix
+version: 1.2.3-beta.2
 main: zoruafan.foxaddition.FoxAddition
 api-version: 1.13
 folia-supported: true
-authors: [NovaCraft254]
-description: An anti-cheat plugin with Folia compatibility
+authors: ["NovaCraft254 (Zowi)", "swift-dart"]
+description: An anti-cheat plugin made with Folia and Geyser support.
 website: https://www.idcteam.xyz/
 depend: [packetevents]
 softdepend: [ProtocolLib, PlaceholderAPI, DiscordSRV, VeinMiner, ExecutableItems, Floodgate]
