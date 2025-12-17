@@ -44,9 +44,19 @@ public class FoxPlayer implements Listener {
     	try {
     		User u = (User) e;
     		u.sendPacket(new WrapperPlayServerDisconnect(reason));
-            if (e != null) { FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected")); }
+            if (e != null) { 
+            	if (FoliaScheduler.isFolia()) {
+            		e.getScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"), null);
+            	} else {
+            		FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"));
+            	}
+            }
         } catch (Exception p) {
-        	FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"));
+        	if (FoliaScheduler.isFolia()) {
+        		e.getScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"), null);
+        	} else {
+        		FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.kickPlayer("Disconnected"));
+        	}
         }
     }
     
