@@ -7,7 +7,8 @@ import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.api.requests.restaction.MessageAction;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -20,7 +21,7 @@ import zoruafan.foxaddition.FoxAdditionAPI;
 public class DiscordSRVManager {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
 	private final JavaPlugin plugin = api.getPlugin();
-	private final HashMap<Player, Long> cooldowns = new HashMap<>();
+	private final Map<Player, Long> cooldowns = new ConcurrentHashMap<>();
 	private final long cooldownTime = 1000L;
 	private static final FilesManager file = FoxAdditionAPI.INSTANCE.getFiles();
 	private static final String p = "hooks.discordsrv";
@@ -28,8 +29,9 @@ public class DiscordSRVManager {
 	public DiscordSRVManager() {}
   
 	public void sendMessageToDiscord(String type, Player e, int vls, String detailed) {
-		DiscordSRV discordSRV = DiscordSRV.getPlugin();
+		if (!file.getST().getBoolean(p+".enable", false) || !plugin.getServer().getPluginManager().isPluginEnabled("DiscordSRV")) { return; }
 		if (this.hasCooldown(e)) { return; } 
+		DiscordSRV discordSRV = DiscordSRV.getPlugin();
 		String channel = file.getST().getString(p+".channel");
 		boolean showTitle = file.getST().getBoolean(p+".show.title");
 		boolean showUUID = file.getST().getBoolean(p+".show.uuid");
@@ -76,7 +78,7 @@ public class DiscordSRVManager {
     	TextChannel textChannel = discordSRV.getJda().getTextChannelById(channel);
     	if (textChannel != null) {
     		try {
-    			Set<Message.MentionType> allowedMentions = Arrays.<Message.MentionType>asList(new Message.MentionType[] { Message.MentionType.USER, Message.MentionType.CHANNEL, Message.MentionType.EMOTE, Message.MentionType.EVERYONE, Message.MentionType.ROLE, Message.MentionType.HERE }).stream().collect(Collectors.toSet());
+    			Set<Message.MentionType> allowedMentions = Arrays.<Message.MentionType>asList(new Message.MentionType[] { Message.MentionType.USER, Message.MentionType.CHANNEL, Message.MentionType.EMOTE, Message.MentionType.ROLE }).stream().collect(Collectors.toSet());
     			textChannel.sendMessageEmbeds(embed).content(contentLang).allowedMentions(allowedMentions).queue();
     		} catch (Exception ig) {
     			textChannel.sendMessageEmbeds(embed).queue();
@@ -86,5 +88,6 @@ public class DiscordSRVManager {
 	}
   
 	private boolean hasCooldown(Player e) { return (this.cooldowns.containsKey(e) && System.currentTimeMillis() < this.cooldowns.get(e)); }
+	public void forget(Player e) { this.cooldowns.remove(e); }
 	private void setCooldown(Player e) { this.cooldowns.put(e, System.currentTimeMillis() + this.cooldownTime); }
 }

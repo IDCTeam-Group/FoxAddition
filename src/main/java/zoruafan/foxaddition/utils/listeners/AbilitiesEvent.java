@@ -2,7 +2,6 @@ package zoruafan.foxaddition.utils.listeners;
 
 import org.bukkit.event.HandlerList;
 
-import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -21,7 +20,8 @@ public class AbilitiesEvent extends Event implements Cancellable {
 	public boolean disable = false;
 	  
 	public AbilitiesEvent(Player player, Optional<Boolean> flying2, Optional<Boolean> godMode, Optional<Boolean> flightAllowed, Optional<Boolean> creativeMode, Optional<Float> flySpeed, Optional<Float> walkSpeed) {
-		super(!FoliaScheduler.isFolia());
+		// Always fired from the player's tick thread (see FoxPacketListener#runSync); an async flag makes Paper reject the event.
+		super(false);
 		
 		this.player = player;
         this.flying = flying2;

@@ -2,7 +2,6 @@ package zoruafan.foxaddition;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
-import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import zoruafan.foxaddition.utils.CommandManager;
@@ -133,7 +132,8 @@ public final class FoxAddition extends JavaPlugin {
 		getLogger().info(paddedMessage.toString());
     }
     
-    public void onPluginDisable(PluginDisableEvent event) {
+    @Override
+    public void onDisable() {
     	api.disable(this);
     }
 }

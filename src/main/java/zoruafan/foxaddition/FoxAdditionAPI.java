@@ -4,13 +4,14 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -18,12 +19,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListener;
+import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.manager.player.PlayerManager;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
 
-import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import zoruafan.foxaddition.checks.badpackets.BadPacketsA;
 import zoruafan.foxaddition.checks.badpackets.BadPacketsB;
 import zoruafan.foxaddition.checks.badpackets.BadPacketsC;
@@ -55,27 +56,23 @@ public enum FoxAdditionAPI {
 	private DiscordSRVManager dsrv;
 	private GeyserManager geyser;
 	private LogManager log;
-	private List<CommandSender> verboseL = new ArrayList<>();
-	private Map<Player, Map<String, Integer>> fVLS = new HashMap<>();
+	private PacketListenerCommon packetListener;
+	private List<CommandSender> verboseL = new CopyOnWriteArrayList<>();
+	private Map<Player, Map<String, Integer>> fVLS = new ConcurrentHashMap<>();
 	private static final Set<String> cT = new HashSet<>(Arrays.asList("mechanics", "world", "badpackets"));
 
-	@SuppressWarnings("deprecation")
 	protected void load(JavaPlugin plugin) {
 		this.plugin = plugin;
 		files = new FilesManager();
 		geyser = new GeyserManager();
 		log = new LogManager();
-		try {
-			PacketEvents.setAPI(SpigotPacketEventsBuilder.build(plugin));
-	        PacketEvents.getAPI().getSettings().checkForUpdates(false).bStats(false).fullStackTrace(false).debug(false);
-	        PacketEvents.getAPI().load();
-		} catch (Exception e) {}
+		// PacketEvents is the shared instance of the packetevents plugin (depend). Replacing it with
+		// PacketEvents.setAPI() would take it away from every other plugin that uses it.
 	}
 	
 	protected void enable(JavaPlugin plugin) {
 		try {
-	        PacketEvents.getAPI().getEventManager().registerListener((PacketListener) new FoxPacketListener(), PacketListenerPriority.HIGHEST);
-	        PacketEvents.getAPI().init();
+	        packetListener = PacketEvents.getAPI().getEventManager().registerListener((PacketListener) new FoxPacketListener(), PacketListenerPriority.HIGHEST);
 		} catch (Exception e) {}
 		Object[] checks = {
 				new FoxPlayer(),
@@ -104,10 +101,13 @@ public enum FoxAdditionAPI {
         }
 		this.dsrv = new DiscordSRVManager();
         this.vlsystem = new VLSystem();
+        Bukkit.getServer().getPluginManager().registerEvents(this.vlsystem, plugin);
 	}
 	
 	protected void disable(JavaPlugin plugin) {
-		PacketEvents.getAPI().terminate();
+		if (vlsystem != null) vlsystem.shutdown();
+		// Only remove our own listener; terminating would shut PacketEvents down for all plugins.
+		try { if (packetListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(packetListener); } catch (Exception e) {}
         try { Bukkit.getServer().getMessenger().unregisterIncomingPluginChannel(plugin, "minecraft:brand"); } catch (Exception e) {}
         try { Bukkit.getServer().getMessenger().unregisterIncomingPluginChannel(plugin, "MC|Brand"); } catch (Exception e) {}
 	}
@@ -127,7 +127,7 @@ public enum FoxAdditionAPI {
     		Bukkit.getLogger().severe("[FA] [API] Value for checkType '"+checkType+"' is invalid. Event ignored.");
     		return;
     	}
-        Map<String, Integer> playerVLS = fVLS.computeIfAbsent(player, k -> new HashMap<>());
+        Map<String, Integer> playerVLS = fVLS.computeIfAbsent(player, k -> new ConcurrentHashMap<>());
         playerVLS.put(checkType, playerVLS.getOrDefault(checkType, 0) + vls);
     }
     
@@ -136,11 +136,16 @@ public enum FoxAdditionAPI {
     		Bukkit.getLogger().severe("[FA] [API] Value for checkType '"+checkType+"' is invalid. Event ignored.");
     		return;
     	}
-        Map<String, Integer> playerVLS = fVLS.computeIfAbsent(player, k -> new HashMap<>());
+        Map<String, Integer> playerVLS = fVLS.computeIfAbsent(player, k -> new ConcurrentHashMap<>());
         playerVLS.put(checkType, Math.max(0, vls));
     }
     
     protected void checkForUpdates() {
+        // Off the server thread: the request may take up to 6 seconds.
+        CompletableFuture.runAsync(this::requestLatestVersion);
+    }
+    
+    private void requestLatestVersion() {
         try {
         	if(!files.getST().getBoolean("updates.update", true)) return;
             @SuppressWarnings("deprecation")
@@ -168,6 +173,13 @@ public enum FoxAdditionAPI {
             connection.disconnect();
         }
         catch (Exception e) { plugin.getLogger().warning("[UPDATER] Failed to check for new updates!"); }
+    }
+	
+    public Set<Player> getTrackedPlayers() { return fVLS.keySet(); }
+    public void forgetPlayer(Player player) {
+        fVLS.remove(player);
+        verboseL.remove(player);
+        if (dsrv != null) dsrv.forget(player);
     }
 	
     public boolean getVerbose(CommandSender sender) { return verboseL.contains(sender); }

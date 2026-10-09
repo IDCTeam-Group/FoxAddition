@@ -7,7 +7,6 @@ import org.bukkit.event.HandlerList;
 
 import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 
-import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 public class AnimationEvent extends Event implements Cancellable {
 	private static final HandlerList handlers = new HandlerList();
@@ -16,7 +15,8 @@ public class AnimationEvent extends Event implements Cancellable {
 	private boolean cancelled;
 	  
 	public AnimationEvent(Player player, InteractionHand hand) {
-		super(!FoliaScheduler.isFolia());
+		// Always fired from the player's tick thread (see FoxPacketListener#runSync); an async flag makes Paper reject the event.
+		super(false);
 		
 		this.player = player;
         this.hand = hand;

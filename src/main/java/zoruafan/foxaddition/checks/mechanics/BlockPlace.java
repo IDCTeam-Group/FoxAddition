@@ -1,6 +1,6 @@
 package zoruafan.foxaddition.checks.mechanics;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,18 +17,17 @@ public class BlockPlace extends FoxPlayer implements Listener {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
 	JavaPlugin plugin = api.getPlugin();
 	String p = "mechanics.modules.blockplace";
-	private final Map<Player, Integer> pC = new HashMap<>();
+	private final Map<Player, Integer> pC = new ConcurrentHashMap<>();
 	
 	public BlockPlace() {
-		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> { for (Map.Entry<Player, Integer> entry : pC.entrySet()) entry.setValue(0); }, 20, 20);
+		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> pC.clear(), 20, 20);
 	}
 
 	@EventHandler
 	public void onBlockPlace(BlockPlaceEvent ev) {
 		if (ev.isCancelled()) return;
 		Player e = ev.getPlayer();
-        if (!pC.containsKey(e)) pC.put(e, 0);
-        int count = pC.get(e);
+        int count = pC.getOrDefault(e, 0);
         pC.put(e, count+1);
         int maxium = api.getFiles().getAC().getInt(p+".amount.max", 15);
         if(!iAD(e, "mechanics", p+".amount", true) && (count >= maxium)) {
@@ -56,4 +55,10 @@ public class BlockPlace extends FoxPlayer implements Listener {
 	}
 	
 	private boolean isNaN(double pos) { return !Double.isNaN(pos); }
+	
+	@Override
+	protected void forget(Player e) {
+		super.forget(e);
+		pC.remove(e);
+	}
 }

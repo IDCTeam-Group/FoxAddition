@@ -24,6 +24,20 @@ permissions:
   foxaddition.bypass:
     description: Bypass all anticheat checks
     default: false
+    children:
+      foxac.bypass.mechanics: true
+      foxac.bypass.world: true
+      foxac.bypass.badpackets: true
+  # Checked in code; undeclared permissions default to op, which made every op bypass all checks.
+  foxac.bypass.mechanics:
+    description: Bypass the mechanics checks
+    default: false
+  foxac.bypass.world:
+    description: Bypass the world checks
+    default: false
+  foxac.bypass.badpackets:
+    description: Bypass the badpackets checks
+    default: false
   foxaddition.alerts:
     description: Receive anticheat alerts
     default: op

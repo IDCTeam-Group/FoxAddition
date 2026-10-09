@@ -25,7 +25,7 @@ public class BadPacketsB extends FoxPlayer implements Listener {
 		String invalid_reason = "";
 		if (id < 0) { invalid = true; invalid_reason = "Sending interaction entity id less than 0 (invalid)."; }
 		else if (id == e.getEntityId()) { invalid = true; invalid_reason = "Sending self interaction entity id (invalid)."; }
-		if (invalid && !iAD(e, "badpackets", p+".enable", true)) {
+		if (invalid && !iAD(e, "badpackets", p, true)) {
         	flag(false, e, invalid_reason, "BadPackets (Packets) [B]", "[id:"+id+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 5), "badpackets");
         	if(api.getFiles().getAC().getBoolean(p+".cancel", true)) { ev.setCancelled(true); }
         	return;

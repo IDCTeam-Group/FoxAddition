@@ -1,6 +1,7 @@
 package zoruafan.foxaddition.checks.mechanics;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -21,10 +22,10 @@ public class Position extends FoxPlayer implements Listener {
 	JavaPlugin plugin = api.getPlugin();
 	String p = "mechanics.modules.position";
 	boolean onGround = false;
-	private final Map<Player, Integer> pC = new HashMap<>();
+	private final Map<Player, Integer> pC = new ConcurrentHashMap<>();
 	
 	public Position() {
-		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> { for (Map.Entry<Player, Integer> entry : pC.entrySet()) entry.setValue(0); }, 20, 20);
+		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> pC.clear(), 20, 20);
 	}
 	
 	private boolean isNaN(double pos) { return !Double.isNaN(pos); }
@@ -33,8 +34,7 @@ public class Position extends FoxPlayer implements Listener {
 	public void onPosition(PositionEvent ev) {
 		if (ev.isCancelled()) return;
 		Player e = ev.getPlayer();
-        if (!pC.containsKey(e)) pC.put(e, 0);
-        int count = pC.get(e);
+        int count = pC.getOrDefault(e, 0);
         pC.put(e, count+1);
         int maxium = api.getFiles().getAC().getInt(p+".amount.max", 300);
         if(!iAD(e, "mechanics", p+".amount", true) && (count >= maxium)) {
@@ -91,12 +91,12 @@ public class Position extends FoxPlayer implements Listener {
 	        	return;
         	}
         }
-    	if (!isNaN(x) || !isNaN(y) || !isNaN(z) && !iAD(e, "mechanics", p+".checks.nan", true)) {
+    	if ((!isNaN(x) || !isNaN(y) || !isNaN(z)) && !iAD(e, "mechanics", p+".checks.nan", true)) {
         	ev.setCancelled(true);
         	flag(true, e, "Sending invalid NaN Position value.", "Mechanics [Position]", "[X:"+!isNaN(x)+", Y:"+!isNaN(y)+", Z:"+!isNaN(z)+"]", api.getFiles().getAC().getInt(p+".checks.nan.vls", 1), "mechanics");
             if(api.getFiles().getAC().getBoolean(p+".checks.nan.kick", false)) timeOut(e);
             return;
-    	} else if (Math.abs(x) > thresholdX || Math.abs(y) > thresholdY || Math.abs(z) > thresholdZ && !iAD(e, "mechanics", p+".checks.max", true)) {
+    	} else if ((Math.abs(x) > thresholdX || Math.abs(y) > thresholdY || Math.abs(z) > thresholdZ) && !iAD(e, "mechanics", p+".checks.max", true)) {
             ev.setCancelled(true);
             double diffX = Math.abs(x) - thresholdX;
             double diffY = Math.abs(y) - thresholdY;
@@ -106,16 +106,16 @@ public class Position extends FoxPlayer implements Listener {
             double abZ = Math.abs(Math.abs(z) - thresholdZ);
             flag(true, e, "Sending maxium movement in a direction!", "Mechanics [Position]", "[X:"+diffX+"/"+abX+", Y:"+diffY+"/"+abY+", Z:"+diffZ+"/"+abZ+"]", api.getFiles().getAC().getInt(p+".checks.nan.vls", 1), "mechanics");
             if(api.getFiles().getAC().getBoolean(p+".checks.max.kick", false)) timeOut(e);
-    	} else if (Double.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z) && !iAD(e, "mechanics", p+".checks.infinite", true)) {
+    	} else if ((Double.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z)) && !iAD(e, "mechanics", p+".checks.infinite", true)) {
     		ev.setCancelled(true);
     		flag(true, e, "Sending invalid Infinite Position value.", "Mechanics [Position]", "[X:"+Double.isInfinite(x)+", Y:"+Double.isInfinite(y)+", Z:"+Double.isInfinite(z)+"]", api.getFiles().getAC().getInt(p+".checks.nan.vls", 1), "mechanics");
     		if(api.getFiles().getAC().getBoolean(p+".checks.infinite.kick", false)) timeOut(e);
     		return;
-    	} else if((oldY+api.getFiles().getAC().getInt(p+".checks.fast.y", 45) < y || oldX+api.getFiles().getAC().getInt(p+".checks.fast.x", 50) < x || oldZ+api.getFiles().getAC().getInt(p+".checks.fast.z", 50) < z) && !iAD(e, "mechanics", p+".checks.fast", false)) { 
+    	} else if((Math.abs(y-oldY) > api.getFiles().getAC().getInt(p+".checks.fast.y", 45) || Math.abs(x-oldX) > api.getFiles().getAC().getInt(p+".checks.fast.x", 50) || Math.abs(z-oldZ) > api.getFiles().getAC().getInt(p+".checks.fast.z", 50)) && !iAD(e, "mechanics", p+".checks.fast", false)) { 
         	ev.setCancelled(true);
-            double diffX = oldX+api.getFiles().getAC().getInt(p+".checks.fast.x", 45) - x;
-            double diffY = oldY+api.getFiles().getAC().getInt(p+".checks.fast.y", 45) - y;
-            double diffZ = oldZ+api.getFiles().getAC().getInt(p+".checks.fast.z", 45) - z;
+            double diffX = x - oldX;
+            double diffY = y - oldY;
+            double diffZ = z - oldZ;
         	flag(true, e, "Sending fast movement in a direction!", "Mechanics [Position]", "[X:"+diffX+", Y:"+diffY+", Z:"+diffZ+"]", api.getFiles().getAC().getInt(p+".checks.fast.vls", 1), "mechanics");
         	if (FoliaScheduler.isFolia()) {
         		FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> e.teleportAsync(oldL));
@@ -124,7 +124,7 @@ public class Position extends FoxPlayer implements Listener {
         	}
         	if(api.getFiles().getAC().getBoolean(p+".checks.fast.kick", false)) timeOut(e);
         	return;
-    	} else if (((pitch > 90 || pitch < -90) || !isNaN(pitch) || Double.isInfinite(pitch)) || (!(aYaw > 0.0 || aYaw < 360.0) || !isNaN(aYaw) || Double.isInfinite(aYaw)) && !iAD(e, "mechanics", p+".checks.yawpitch", true)) {
+    	} else if ((((pitch > 90 || pitch < -90) || !isNaN(pitch) || Double.isInfinite(pitch)) || (!(aYaw > 0.0 || aYaw < 360.0) || !isNaN(aYaw) || Double.isInfinite(aYaw))) && !iAD(e, "mechanics", p+".checks.yawpitch", true)) {
             ev.setCancelled(true);
             flag(true, e, "Sending invalid Yaw/Pitch position!", "Mechanics [Position]", "", api.getFiles().getAC().getInt(p+".checks.yawpitch.vls", 2), "mechanics");
             if(api.getFiles().getAC().getBoolean(p+".checks.yawpitch.kick", false)) timeOut(e);
@@ -142,4 +142,10 @@ public class Position extends FoxPlayer implements Listener {
 	        if ((chunk == null || !world.isChunkLoaded(chunk)) && api.getFiles().getAC().getBoolean(p+".nullchunk", true)) { flag(true, e, "Tried to move in a chunk unloaded!", "Mechanics [Position]", "", 0, "mechanics"); ev.setCancelled(true); }
         } catch (Exception p) {}
     }
+	
+	@Override
+	protected void forget(Player e) {
+		super.forget(e);
+		pC.remove(e);
+	}
 }

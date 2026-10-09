@@ -38,7 +38,7 @@ public class BadPacketsA extends FoxPlayer implements Listener {
 	        default:
 	        	break;
         }
-        if(invalid && !iAD(e, "badpackets", p+".enable", true)) {
+        if(invalid && !iAD(e, "badpackets", p, true)) {
         	flag(false, e, "Player sended BlockDig with invalid directions.", "BadPackets (Packets) [A]", "[face:"+face+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 5), "badpackets");
         	if(api.getFiles().getAC().getBoolean(p+".cancel", true)) { ev.setCancelled(true); }
         	return;

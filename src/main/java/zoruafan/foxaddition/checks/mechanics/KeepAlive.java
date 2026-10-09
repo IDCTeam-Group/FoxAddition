@@ -1,6 +1,6 @@
 package zoruafan.foxaddition.checks.mechanics;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,32 +15,30 @@ public class KeepAlive extends FoxPlayer implements Listener {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
 	JavaPlugin plugin = api.getPlugin();
 	String p = "mechanics.modules.keepalive";
-	private final Map<Player, Integer> pC = new HashMap<>();
-	long id = -1;
-	boolean first = true;
+	private final Map<Player, Integer> pC = new ConcurrentHashMap<>();
+	private final Map<Player, Long> lastId = new ConcurrentHashMap<>();
 	
 	public KeepAlive() {
-		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> { for (Map.Entry<Player, Integer> entry : pC.entrySet()) entry.setValue(0); }, 20, 20);
+		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> pC.clear(), 20, 20);
 	}
 
 	@EventHandler
 	public void onKeepAlive(KeepAliveEvent ev) {
 		if (ev.isCancelled()) return;
 		Player e = ev.getPlayer();
-        if (!pC.containsKey(e)) pC.put(e, 0);
-        int count = pC.get(e);
+        int count = pC.getOrDefault(e, 0);
         pC.put(e, count+1);
         int maxium = api.getFiles().getAC().getInt(p+".amount.max", 10);
-        if((id != 0.0 && first == false) && !iAD(e, "mechanics", p+".amount", true) && (count >= maxium)) {
+        final Long id = lastId.get(e);
+        if((id != null && id != 0L) && !iAD(e, "mechanics", p+".amount", true) && (count >= maxium)) {
         	ev.setCancelled(true);
         	flag(true, e, "Exceeds maxium amount of packets!", "Mechanics [KeepAlive]", "[packets:"+count+"/"+maxium+"]", api.getFiles().getAC().getInt(p+".amount.vls", 1), "mechanics");
         	if(api.getFiles().getAC().getBoolean(p+".amount.kick", false)) packetExceeded(e);
         	return;
         }
         
-        if(id == -1 && first == true) {
-        	id = ev.getID();
-        	first = false;
+        if(id == null) {
+        	lastId.put(e, ev.getID());
         	return;
         }
         if (id > ev.getID() && !iAD(e, "mechanics", p+".checks.decreasing", true)) {
@@ -49,6 +47,13 @@ public class KeepAlive extends FoxPlayer implements Listener {
         	if(api.getFiles().getAC().getBoolean(p+".checks.decreasing.kick", false)) timeOut(e);
         	return;        	
         }
-        id = ev.getID();
+        lastId.put(e, ev.getID());
+	}
+	
+	@Override
+	protected void forget(Player e) {
+		super.forget(e);
+		pC.remove(e);
+		lastId.remove(e);
 	}
 }
