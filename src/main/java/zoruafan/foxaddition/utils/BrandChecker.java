@@ -33,7 +33,7 @@ public class BrandChecker extends FoxPlayer implements Listener, PluginMessageLi
     public void onPluginMessageReceived(String channel, Player e, byte[] message) {
     	if(!file.getBoolean(p+".enable", true)) return;
         if ("minecraft:brand".equals(channel) || "MC|Brand".equals(channel)) {
-        	String originalMessage = new String(message, StandardCharsets.UTF_8).replace(" (Velocity)", "");
+        	String originalMessage = readBrand(message).replace(" (Velocity)", "");
             final String brand = originalMessage.trim();
             if (!isAllowed(brand)) {
                 List<String> commands = file.getStringList(p+".commands");
@@ -55,25 +55,46 @@ public class BrandChecker extends FoxPlayer implements Listener, PluginMessageLi
         }
     }
     
-    private static String sanitize(String brand) {
+    // The payload is a VarInt length followed by the UTF-8 brand. Reading it as a whole string
+    // left the length byte in front of brands with 32 or more characters.
+    static String readBrand(byte[] data) {
+        int length = 0;
+        for (int i = 0; i < data.length && i < 5; i++) {
+            int b = data[i] & 0xFF;
+            length |= (b & 0x7F) << (7 * i);
+            if ((b & 0x80) == 0) {
+                int start = i + 1;
+                if (length >= 0 && length <= data.length - start) return new String(data, start, length, StandardCharsets.UTF_8);
+                break;
+            }
+        }
+        return new String(data, StandardCharsets.UTF_8);
+    }
+    
+    static String sanitize(String brand) {
         String clean = brand.replaceAll("[^A-Za-z0-9._:\\-]", "_");
         return clean.length() > MAX_BRAND_LENGTH ? clean.substring(0, MAX_BRAND_LENGTH) : clean;
     }
 
+    // '*' is the only wildcard; everything else matches literally, upper or lower case.
+    static boolean matchesPattern(String pattern, String brand) {
+        try {
+            return Pattern.compile(Pattern.quote(pattern).replace("*", "\\E.*\\Q"), Pattern.CASE_INSENSITIVE).matcher(brand).matches();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
     private boolean isAllowed(String brand) {
         List<String> l = file.getStringList(p+".list");
         String t = file.getString(p+".type", "whitelist");
         String bL = brand;
         boolean iM = false;
         for (String ps : l) {
-            String regex = ps.replace("*", ".*");
-            try {
-                Pattern pattern = Pattern.compile(regex);
-                if (pattern.matcher(bL).matches()) {
-                    iM = true;
-                    break;
-                }
-            } catch (Exception e) { continue; }
+            if (matchesPattern(ps, bL)) {
+                iM = true;
+                break;
+            }
         }
         if (t.equalsIgnoreCase("whitelist")) { return iM; } else if (t.equalsIgnoreCase("blacklist")) { return !iM;
         } else {

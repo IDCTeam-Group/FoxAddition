@@ -1,5 +1,7 @@
 package zoruafan.foxaddition.utils.listeners;
 
+import org.bukkit.Location;
+import org.bukkit.util.Vector;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 
@@ -23,8 +25,22 @@ public class PositionEvent extends Event implements Cancellable {
 	boolean flying;
 	PacketReceiveEvent packet;
 	PositionType type;
+	Location previous;
+	Vector previousVelocity;
+	boolean afterTeleport;
+	long receivedAt;
 	  
 	public PositionEvent(Player player, double x, double y, double z, float yaw, float pitch, boolean onGround, boolean flying, PacketReceiveEvent ev, PositionType type) {
+		this(player, x, y, z, yaw, pitch, onGround, flying, ev, type, null, null);
+	}
+	
+	public PositionEvent(Player player, double x, double y, double z, float yaw, float pitch, boolean onGround, boolean flying, PacketReceiveEvent ev, PositionType type, Location previous, Vector previousVelocity) {
+		this(player, x, y, z, yaw, pitch, onGround, flying, ev, type, previous, previousVelocity, false, System.currentTimeMillis());
+	}
+	
+	// previous/previousVelocity: the player's location and velocity when the packet arrived, before the server applied the move.
+	// afterTeleport: the packet may carry the jump of a teleport. receivedAt: when the packet arrived.
+	public PositionEvent(Player player, double x, double y, double z, float yaw, float pitch, boolean onGround, boolean flying, PacketReceiveEvent ev, PositionType type, Location previous, Vector previousVelocity, boolean afterTeleport, long receivedAt) {
 		// Always fired from the player's tick thread (see FoxPacketListener#runSync); an async flag makes Paper reject the event.
 		super(false);
 		
@@ -38,6 +54,26 @@ public class PositionEvent extends Event implements Cancellable {
 	    this.flying = flying;
 	    this.packet = ev;
 	    this.type = type;
+	    this.previous = previous;
+	    this.previousVelocity = previousVelocity;
+	    this.afterTeleport = afterTeleport;
+	    this.receivedAt = receivedAt;
+	}
+	
+	public Location getPreviousLocation() {
+		return this.previous;
+	}
+	
+	public Vector getPreviousVelocity() {
+		return this.previousVelocity;
+	}
+	
+	public boolean isAfterTeleport() {
+		return this.afterTeleport;
+	}
+	
+	public long getReceivedAt() {
+		return this.receivedAt;
 	}
 	  
 	public double getX() {

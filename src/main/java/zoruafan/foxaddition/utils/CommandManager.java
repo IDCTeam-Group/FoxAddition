@@ -29,7 +29,6 @@ public class CommandManager implements CommandExecutor {
         }
         if (length < 1 || args[0].equalsIgnoreCase("help")) sendHelpMessage(sender);
         else if (args[0].equalsIgnoreCase("reload")) {
-        	file.reload("hooks");
             file.reload("checks");
             file.reload("settings");
             file.reload("language");

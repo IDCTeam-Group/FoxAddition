@@ -10,6 +10,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.bukkit.configuration.file.FileConfiguration;
@@ -29,6 +32,12 @@ public class LogManager
     private DateTimeFormatter tsFormat = DateTimeFormatter.ofPattern(timeFormat).withZone(TimeZone.getDefault().toZoneId());
     private File currentLogFile;
     private int cleanupDays;
+    // Flags are logged from the server thread; the file I/O runs on this single daemon thread.
+    private final ExecutorService writerThread = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "FoxAddition-Log");
+        t.setDaemon(true);
+        return t;
+    });
     
     public LogManager() {
     	if(!file.getBoolean("logs.enable")) return;
@@ -52,11 +61,20 @@ public class LogManager
     
     public void log(final String message) {
     	if(!file.getBoolean("logs.enable")) return;
-        final File logFile = getCurrentLogFile();
-        try (FileWriter writer = new FileWriter(logFile, true)) {
-            final String timestamp = tsFormat.format(LocalDateTime.now());
-            writer.write("[" + timestamp + "] " + message + "\n");
+        final String timestamp = tsFormat.format(LocalDateTime.now());
+        try {
+            writerThread.execute(() -> {
+                final File logFile = getCurrentLogFile();
+                try (FileWriter writer = new FileWriter(logFile, true)) {
+                    writer.write("[" + timestamp + "] " + message + "\n");
+                } catch (Exception e) {}
+            });
         } catch (Exception e) {}
+    }
+    
+    public void shutdown() {
+        writerThread.shutdown();
+        try { writerThread.awaitTermination(2, TimeUnit.SECONDS); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
     }
     
     private File getCurrentLogFile() {
