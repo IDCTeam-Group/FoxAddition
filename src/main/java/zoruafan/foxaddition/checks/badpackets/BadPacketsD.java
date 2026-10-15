@@ -1,5 +1,8 @@
 package zoruafan.foxaddition.checks.badpackets;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -13,7 +16,7 @@ public class BadPacketsD extends FoxPlayer implements Listener {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
 	JavaPlugin plugin = api.getPlugin();
 	String p = "badpackets.modules.packets.d";
-	private int last = -1;
+	private final Map<Player, Integer> last = new ConcurrentHashMap<>();
 	
 	public BadPacketsD() {}
 	
@@ -23,12 +26,18 @@ public class BadPacketsD extends FoxPlayer implements Listener {
 		Player e = ev.getPlayer();
 		int slot = ev.getSlot();
 		
-		if (slot == last && !iAD(e, "badpackets", p+".enable", true)) {
+		if (slot == last.getOrDefault(e, -1) && !iAD(e, "badpackets", p, true)) {
         	flag(false, e, "Sending held item packet with the same slot than latest.", "BadPackets (Packets) [D]", "[slot:"+slot+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 4), "badpackets");
         	if(api.getFiles().getAC().getBoolean(p+".cancel", true)) { ev.setCancelled(true); }
-        	this.last = slot;
+        	last.put(e, slot);
         	return;
 		}
-		this.last = slot;
+		last.put(e, slot);
+	}
+	
+	@Override
+	protected void forget(Player e) {
+		super.forget(e);
+		last.remove(e);
 	}
 }

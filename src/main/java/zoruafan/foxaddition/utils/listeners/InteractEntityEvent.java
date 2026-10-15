@@ -11,7 +11,6 @@ import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.util.Vector3f;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity.InteractAction;
 
-import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 public class InteractEntityEvent extends Event implements Cancellable {
 	private static final HandlerList handlers = new HandlerList();
@@ -24,7 +23,8 @@ public class InteractEntityEvent extends Event implements Cancellable {
 	private boolean cancelled;
 	
 	public InteractEntityEvent(Player player, int id, InteractAction action, InteractionHand hand, Optional<Vector3f> target, Optional<Boolean> sneaking) {
-		super(!FoliaScheduler.isFolia());
+		// Always fired from the player's tick thread (see FoxPacketListener#runSync); an async flag makes Paper reject the event.
+		super(false);
 		
 		this.player = player;
 		this.id = id;

@@ -24,7 +24,7 @@ public class BadPacketsF extends FoxPlayer implements Listener {
 		int jumpBoost = ev.getJumpBoost();
 		int entityID = ev.getEntityId();
 		Action action = ev.getAction();
-		if((jumpBoost < 0 || jumpBoost > 100 || (action != Action.START_JUMPING_WITH_HORSE && jumpBoost != 0)) && !iAD(e, "badpackets", p+".enable", true)) {
+		if((jumpBoost < 0 || jumpBoost > 100 || (action != Action.START_JUMPING_WITH_HORSE && jumpBoost != 0)) && !iAD(e, "badpackets", p, true)) {
         	flag(false, e, "", "BadPackets (Packets) [F]", "[jumpBoost:"+jumpBoost+"/100] [entityID:"+entityID+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 3), "badpackets");
         	if(api.getFiles().getAC().getBoolean(p+".cancel", true)) { ev.setCancelled(true); }
         	try { if(api.getFiles().getAC().getBoolean(p+".eject", true)) { e.eject(); } } catch(Exception ig) {}

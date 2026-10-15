@@ -21,7 +21,7 @@ public class BadPacketsE extends FoxPlayer implements Listener {
 		if (ev.isCancelled()) return;
 		Player e = ev.getPlayer();
 		int slot = ev.getSlot();
-		if ((slot > 8 || slot < 0) && !iAD(e, "badpackets", p+".enable", true)) {
+		if ((slot > 8 || slot < 0) && !iAD(e, "badpackets", p, true)) {
         	flag(false, e, "Sending held item packet with an invalid slot ID.", "BadPackets (Packets) [E]", "[slot:"+slot+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 4), "badpackets");
         	ev.setCancelled(true);
         	return;

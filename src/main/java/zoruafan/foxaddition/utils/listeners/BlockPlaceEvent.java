@@ -6,7 +6,6 @@ import org.bukkit.event.HandlerList;
 import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.protocol.world.BlockFace;
 import com.github.retrooper.packetevents.util.Vector3i;
-import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 
@@ -21,7 +20,8 @@ public class BlockPlaceEvent extends Event implements Cancellable {
 	private boolean cancelled;
 	  
 	public BlockPlaceEvent(Player player, Vector3i blockPosition, BlockFace face, long sequence, InteractionHand hand) {
-		super(!FoliaScheduler.isFolia());
+		// Always fired from the player's tick thread (see FoxPacketListener#runSync); an async flag makes Paper reject the event.
+		super(false);
 		
 		this.player = player;
 		this.blockPosition = blockPosition;

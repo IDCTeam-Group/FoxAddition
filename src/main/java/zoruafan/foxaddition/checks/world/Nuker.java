@@ -1,6 +1,6 @@
 package zoruafan.foxaddition.checks.world;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,12 +25,12 @@ public class Nuker extends FoxPlayer implements Listener {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
 	JavaPlugin plugin = api.getPlugin();
 	String p = "world.modules.nuker";
-	private final Map<Player, Integer> pC = new HashMap<>();
+	private final Map<Player, Integer> pC = new ConcurrentHashMap<>();
 	private int ms = 200;
-	private Map<Player, Long> lBT = new HashMap<>();
+	private Map<Player, Long> lBT = new ConcurrentHashMap<>();
 	
 	public Nuker() {
-		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> { for (Map.Entry<Player, Integer> entry : pC.entrySet()) entry.setValue(0); }, 20, 20);
+		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> pC.clear(), 20, 20);
 	}
 
 	@EventHandler
@@ -46,13 +46,12 @@ public class Nuker extends FoxPlayer implements Listener {
 	       	else { lBT.remove(e); return; }
 	  	}
 	   	if (!(ev.getPlayer().getType() == EntityType.PLAYER)) { return; }
-        if (!pC.containsKey(e)) pC.put(e, 0);
 		int x = ev.getBlockPosition().getX();
   		int y = ev.getBlockPosition().getY();
      	int z = ev.getBlockPosition().getZ();
       	Block b = e.getWorld().getBlockAt(x, y, z);
         if(api.getFiles().getAC().getBoolean(p+".blocklist.enable", false)) { if (!isAllowed(e, b.getType())) { return; } }
-        int count = pC.get(e);
+        int count = pC.getOrDefault(e, 0);
         pC.put(e, count+1);
         int maxium = api.getFiles().getAC().getInt(p+".flood.max", 20);
         if(!iAD(e, "world", p+".flood", true) && (count >= maxium)) {
@@ -130,5 +129,12 @@ public class Nuker extends FoxPlayer implements Listener {
 	       	if (currentTime - lastBreakTime < ms) { startCooldown(e); ev.setCancelled(true); return; }
 	       	else { lBT.remove(e); return; }
 	  	}
+	}
+	
+	@Override
+	protected void forget(Player e) {
+		super.forget(e);
+		pC.remove(e);
+		lBT.remove(e);
 	}
 }

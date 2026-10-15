@@ -27,7 +27,7 @@ public class BadPacketsG extends FoxPlayer implements Listener {
 		if (e.isDead()) { invalid = true; invalid_reason = "Sending interaction packet when this is dead (impossible)."; }
 		else if (e.isSleeping()) { invalid = true; invalid_reason = "Sending interaction packet when this is sleeping (impossible)."; }
 
-		if (invalid && !iAD(e, "badpackets", p+".enable", true)) {
+		if (invalid && !iAD(e, "badpackets", p, true)) {
 			detect(e, invalid_reason, id);
         	if(api.getFiles().getAC().getBoolean(p+".cancel", true)) { ev.setCancelled(true); }
         	return;
@@ -43,7 +43,7 @@ public class BadPacketsG extends FoxPlayer implements Listener {
 		String invalid_reason = "";
 		if (e.isDead()) { invalid = true; invalid_reason = "Sending entity action packet when this is dead (impossible)."; }
 		else if (e.isSleeping()) { invalid = true; invalid_reason = "Sending entity action packet when this is sleeping (impossible)."; }
-		if (invalid && !iAD(e, "badpackets", p+".enable", true)) {
+		if (invalid && !iAD(e, "badpackets", p, true)) {
 			detect(e, invalid_reason, id);
         	if(api.getFiles().getAC().getBoolean(p+".cancel", true)) { ev.setCancelled(true); }
         	return;

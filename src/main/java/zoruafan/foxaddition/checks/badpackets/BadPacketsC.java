@@ -31,7 +31,7 @@ public class BadPacketsC extends FoxPlayer implements Listener {
 		if (forward > max_forward) { invalid = true; invalid_reason = "Sending SteerVehicle packet with an invalid forward movement value."; }
 		else if (sideway > max_sideway) { invalid = true; invalid_reason = "Sending SteerVehicle packet with an invalid sideway movement value."; }
 		
-		if (invalid && !iAD(e, "badpackets", p+".enable", true)) {
+		if (invalid && !iAD(e, "badpackets", p, true)) {
         	flag(false, e, invalid_reason, "BadPackets (Packets) [C]", "[forward:"+forward+"/"+max_forward+"] [sideway:"+sideway+"/"+max_sideway+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 3), "badpackets");
         	if(api.getFiles().getAC().getBoolean(p+".cancel", true)) { ev.setCancelled(true); }
         	try { if(api.getFiles().getAC().getBoolean(p+".eject", true)) { e.eject(); } } catch(Exception ig) {}

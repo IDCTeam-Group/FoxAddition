@@ -22,10 +22,10 @@ public class CommandManager implements CommandExecutor {
     
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
         final int length = args.length;
-        if (!sender.hasPermission("foxac.command")) {
-            final String unknownCommand = "/" + label + " " + String.join(" ", (CharSequence[])args);
-            Bukkit.dispatchCommand(sender, unknownCommand);
-            return false;
+        // plugin.yml declares foxaddition.command; foxac.command is kept for existing setups.
+        if (!sender.hasPermission("foxaddition.command") && !sender.hasPermission("foxac.command")) {
+            sender.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
+            return true;
         }
         if (length < 1 || args[0].equalsIgnoreCase("help")) sendHelpMessage(sender);
         else if (args[0].equalsIgnoreCase("reload")) {

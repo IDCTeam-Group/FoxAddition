@@ -5,7 +5,6 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientEntityAction.Action;
-import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 
 public class EntityActionEvent extends Event implements Cancellable {
 	private static final HandlerList handlers = new HandlerList();
@@ -16,7 +15,8 @@ public class EntityActionEvent extends Event implements Cancellable {
 	private boolean cancelled;
 	  
 	public EntityActionEvent(Player player, int entityID, Action action, int jumpBoost) {
-		super(!FoliaScheduler.isFolia());
+		// Always fired from the player's tick thread (see FoxPacketListener#runSync); an async flag makes Paper reject the event.
+		super(false);
 		
 		this.player = player;
         this.entityID = entityID;

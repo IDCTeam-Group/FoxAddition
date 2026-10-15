@@ -5,7 +5,6 @@ import org.bukkit.event.HandlerList;
 
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 
-import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 import zoruafan.foxaddition.utils.PositionType;
 
 import org.bukkit.event.Cancellable;
@@ -26,7 +25,8 @@ public class PositionEvent extends Event implements Cancellable {
 	PositionType type;
 	  
 	public PositionEvent(Player player, double x, double y, double z, float yaw, float pitch, boolean onGround, boolean flying, PacketReceiveEvent ev, PositionType type) {
-		super(!FoliaScheduler.isFolia());
+		// Always fired from the player's tick thread (see FoxPacketListener#runSync); an async flag makes Paper reject the event.
+		super(false);
 		
 		this.player = player;
 	    this.x = x;

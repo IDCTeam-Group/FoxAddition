@@ -19,9 +19,8 @@ public class BrandChecker extends FoxPlayer implements Listener, PluginMessageLi
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
 	private final JavaPlugin plugin = api.getPlugin();
 	private final FileConfiguration file = api.getFiles().getST();
-    String brand = "vanilla";
-    boolean hasBrand = false;
     String p = "brandchecker.";
+    private static final int MAX_BRAND_LENGTH = 64;
 
     public BrandChecker() { registerPluginChannelListener(); }	
     
@@ -35,24 +34,32 @@ public class BrandChecker extends FoxPlayer implements Listener, PluginMessageLi
     	if(!file.getBoolean(p+".enable", true)) return;
         if ("minecraft:brand".equals(channel) || "MC|Brand".equals(channel)) {
         	String originalMessage = new String(message, StandardCharsets.UTF_8).replace(" (Velocity)", "");
-            brand = originalMessage.trim();
+            final String brand = originalMessage.trim();
             if (!isAllowed(brand)) {
                 List<String> commands = file.getStringList(p+".commands");
                 if (!api.getPlugin().isEnabled()) return;
+                // The brand is client-controlled, so it must never reach the console as raw text.
+                final String safeBrand = sanitize(brand);
                 for (String command : commands) {
                 	if(command.equals("[close]")) { closeConnection(e); return; }
-                	String cmd_1 = command.replace("{player}", e.getName()).replace("{brand}", brand);
+                	String cmd_1 = command.replace("{player}", e.getName());
                 	if (e != null) {
                 		Plugin placeholderAPI = plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI");
                 		if (placeholderAPI != null && placeholderAPI.isEnabled()) cmd_1 = applyPlaceholderAPI(e, cmd_1);
                 	}
-                	final String cmd = cmd_1;
+                	// Insert the brand after PlaceholderAPI, so placeholders inside the brand are not parsed.
+                	final String cmd = cmd_1.replace("{brand}", safeBrand);
                 	FoliaScheduler.getGlobalRegionScheduler().run(api.getPlugin(), (FA) -> plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), cmd));
                 }
             }
         }
     }
     
+    private static String sanitize(String brand) {
+        String clean = brand.replaceAll("[^A-Za-z0-9._:\\-]", "_");
+        return clean.length() > MAX_BRAND_LENGTH ? clean.substring(0, MAX_BRAND_LENGTH) : clean;
+    }
+
     private boolean isAllowed(String brand) {
         List<String> l = file.getStringList(p+".list");
         String t = file.getString(p+".type", "whitelist");

@@ -52,10 +52,12 @@ public class FoxPacketListener extends FoliaScheduler implements PacketListener 
         if (!pl.isEnabled()) {
             return;
         }
+        // The task runs a tick later; skip it if the player quit in between, so per-player state is not recreated.
+        final Runnable guarded = () -> { if (player.isOnline()) task.run(); };
         if (IS_FOLIA) {
-            player.getScheduler().run(pl, t -> task.run(), null);
+            player.getScheduler().run(pl, t -> guarded.run(), null);
         } else {
-            Bukkit.getScheduler().runTask(pl, task);
+            Bukkit.getScheduler().runTask(pl, guarded);
         }
     }
     

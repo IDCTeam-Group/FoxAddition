@@ -1,6 +1,6 @@
 package zoruafan.foxaddition.checks.mechanics;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -16,10 +16,10 @@ public class Abilities extends FoxPlayer implements Listener {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
 	JavaPlugin plugin = api.getPlugin();
 	String p = "mechanics.modules.abilities";
-	private final Map<Player, Integer> pC = new HashMap<>();
+	private final Map<Player, Integer> pC = new ConcurrentHashMap<>();
 	
 	public Abilities() {
-		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> { for (Map.Entry<Player, Integer> entry : pC.entrySet()) entry.setValue(0); }, 20, 20);
+		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> pC.clear(), 20, 20);
 	}
 
 	@SuppressWarnings("deprecation")
@@ -27,8 +27,7 @@ public class Abilities extends FoxPlayer implements Listener {
 	public void onAbilitiest(AbilitiesEvent ev) {
 		if (ev.isCancelled()) return;
 		Player e = ev.getPlayer();
-        if (!pC.containsKey(e)) pC.put(e, 0);
-        int count = pC.get(e);
+        int count = pC.getOrDefault(e, 0);
         pC.put(e, count+1);
         int maxium = api.getFiles().getAC().getInt(p+".amount.max", 5);
         boolean onground = true;
@@ -47,13 +46,13 @@ public class Abilities extends FoxPlayer implements Listener {
         
     	boolean de = true;
     	boolean iv = false;
-    	if(api.getFiles().getAC().getBoolean(p+".checks.abilities.ignore_velocity", true)) { if(e.getVelocity().getX() > 0.0 || e.getVelocity().getY() > 0.0 || e.getVelocity().getZ() > 0.0) { de = false; } }
+    	if(api.getFiles().getAC().getBoolean(p+".checks.allowedflight.ignore_velocity", true)) { if(e.getVelocity().getX() > 0.0 || e.getVelocity().getY() > 0.0 || e.getVelocity().getZ() > 0.0) { de = false; } }
     	if(de) { iv = true; }
         
-        if(allowedFlight && (!flying && !creativeMode && !godMode) && !iv && onground && !iAD(e, "mechanics", p+".checks.abilities", true)) {
+        if(allowedFlight && (!flying && !creativeMode && !godMode) && !iv && onground && !iAD(e, "mechanics", p+".checks.allowedflight", true)) {
         	ev.setCancelled(true);
-        	flag(false, e, "Sended allowedFlight value without another value! (Probably Vanilla Fly)", "Mechanics [Abilities]", "[packets:"+count+"/"+maxium+"] [allowedFlight:"+allowedFlight+"] [flying:"+flying+"] [creativeMode:"+creativeMode+"] [godMode:"+godMode+"] [gamemode:"+e.getGameMode()+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".checks.abilities.vls", 4), "mechanics");
-        	if(api.getFiles().getAC().getBoolean(p+".checks.abilities.kick", false)) timeOut(e);
+        	flag(false, e, "Sended allowedFlight value without another value! (Probably Vanilla Fly)", "Mechanics [Abilities]", "[packets:"+count+"/"+maxium+"] [allowedFlight:"+allowedFlight+"] [flying:"+flying+"] [creativeMode:"+creativeMode+"] [godMode:"+godMode+"] [gamemode:"+e.getGameMode()+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".checks.allowedflight.vls", 4), "mechanics");
+        	if(api.getFiles().getAC().getBoolean(p+".checks.allowedflight.kick", false)) timeOut(e);
         	return;
         } else if((creativeMode && e.getGameMode() != GameMode.CREATIVE) && !iAD(e, "mechanics", p+".checks.creativemode", true)) {
         	ev.setCancelled(true);
@@ -61,5 +60,11 @@ public class Abilities extends FoxPlayer implements Listener {
         	if(api.getFiles().getAC().getBoolean(p+".checks.creativemode.kick", false)) timeOut(e);
         	return;
         }
+	}
+	
+	@Override
+	protected void forget(Player e) {
+		super.forget(e);
+		pC.remove(e);
 	}
 }

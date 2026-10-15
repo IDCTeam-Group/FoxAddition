@@ -1,12 +1,14 @@
 package zoruafan.foxaddition.utils;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisconnect;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
@@ -19,9 +21,18 @@ public class FoxPlayer implements Listener {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
     public static ServerVersion VERSION;
     public boolean inventory = false;
-    private final HashMap<Player, Long> kickTC = new HashMap<Player, Long>();
+    private final Map<Player, Long> kickTC = new ConcurrentHashMap<>();
     JavaPlugin plugin = api.getPlugin();
-    private final HashMap<Player, Long> delays = new HashMap<Player, Long>();
+    private final Map<Player, Long> delays = new ConcurrentHashMap<>();
+    
+    @EventHandler
+    public void onQuit(PlayerQuitEvent ev) { forget(ev.getPlayer()); }
+    
+    /** Drops all per-player state of this check. Subclasses with own maps override this and call super. */
+    protected void forget(Player e) {
+    	kickTC.remove(e);
+    	delays.remove(e);
+    }
     
     public void packetExceeded(Player e) {
     	disconnectPlayer(e, Component.translatable("disconnect.exceeded_packet_rate"));
@@ -66,7 +77,7 @@ public class FoxPlayer implements Listener {
 		final List<String> disabledWorlds = (List<String>) api.getFiles().getAC().getStringList(t.toLowerCase()+".disabled-worlds");
 		if (disabledWorlds != null && disabledWorlds.contains(e.getWorld().getName())) { return true; }
 		if (api.getFiles().getAC().getBoolean(t.toLowerCase()+".ping.enable", false)) { if(api.getPing(e) >= api.getFiles().getAC().getInt(t.toLowerCase()+".ping.maxium", 1000)) { return true; } }
-		if (api.getFiles().getAC().getBoolean(t.toLowerCase()+".tps.enable", false)) { if(api.getTPS() >= api.getFiles().getAC().getDouble(t.toLowerCase()+".ping.minium", 15.0)) { return true; } }
+		if (api.getFiles().getAC().getBoolean(t.toLowerCase()+".tps.enable", false)) { double tps = api.getTPS(); if(tps >= 0 && tps < api.getFiles().getAC().getDouble(t.toLowerCase()+".tps.minium", 15.0)) { return true; } }
 		boolean isBedrock = api.getGeyser().iB(e);
 		int mode = 1;
 		if(!isBedrock) mode = 1;
@@ -87,9 +98,8 @@ public class FoxPlayer implements Listener {
     	String bde_f = api.getGeyser().getDevice(e);
     	String bde = bde_f;
     	bde_f = "[device:"+api.getGeyser().getDevice(e)+"]";
-		CompletableFuture.runAsync(() -> {
-			this.api.getDSRV().sendMessageToDiscord(module, e, api.getVLS(e, module), details);
-		});
+		// Runs on the player's thread: the embed reads the player location, JDA queues the request itself.
+		try { this.api.getDSRV().sendMessageToDiscord(module, e, api.getVLS(e, module), details); } catch (Throwable ig) {}
     	api.verboseNotify(api.getFiles().MN("command.verbose.format", e).replace("{player}", String.valueOf(e.getName())).replace("{vls}", String.valueOf(api.getVLS(e, module))).replace("{vls_added}", String.valueOf(vls)).replace("{module}", name).replace("{details}", details).replace("{debug}", debug).replace("{ver}", ver).replace("{device}", bde_f).replace("{device_noformat}", bde).replace("{server_version}", String.valueOf(api.getVersion())).replace("{foxaddition_version}", api.getPlugin().getDescription().getVersion()).replace("{ping}", String.valueOf(api.getPing(e))).replace("{tps}", String.valueOf(api.getTPS()))); 
     	api.getLog().log(ChatColor.stripColor(api.getFiles().MN("command.verbose.logs", e).replace("{player}", String.valueOf(e.getName())).replace("{vls}", String.valueOf(api.getVLS(e, module))).replace("{vls_added}", String.valueOf(vls)).replace("{module}", name).replace("{details}", details).replace("{debug}", debug).replace("{ver}", ver).replace("{device}", bde_f).replace("{device_noformat}", bde)).replace("{device_noformat}", bde).replace("{server_version}", String.valueOf(api.getVersion())).replace("{foxaddition_version}", api.getPlugin().getDescription().getVersion()).replace("{ping}", String.valueOf(api.getPing(e))).replace("{tps}", String.valueOf(api.getTPS())));
     }
