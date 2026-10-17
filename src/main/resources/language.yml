@@ -54,5 +54,10 @@ messages:
         format: '{prefix} &6[VERBOSE] &b{player} &7failed &2{module} &7check &8| &7{details} &8| &7{debug} &7ver:&6{ver} &7device:&d{device_noformat} &7vl:{vls}&a(+{vls_added})'
         # This is used in logs.
         logs: '[ALERT] {player} failed {module} check | {details} | {debug} ver:{ver} device:{device_noformat} vl:{vls}(+{vls_added}) | server_ver:{server_version} fa_ver:{foxaddition_version}'
+    # Kick messages. The defaults look like the vanilla disconnect screens.
+    kick:
+      timeout: 'Timed out'
+      packets: 'Kicked for exceeding packet rate limit'
+      closed: 'Connection closed'
 
 version: 4

@@ -22,13 +22,27 @@ public class Abilities extends FoxPlayer implements Listener {
 		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> pC.clear(), 20, 20);
 	}
 
+	// Runs on the netty thread from FoxPacketListener, before the server handles the packet, so the
+	// return value can still cancel it. Flags and Bukkit calls are moved to the player's thread.
+	public boolean onPacket(Player e, boolean allowedFlight, boolean flying, boolean creativeMode, boolean godMode) {
+        int count = pC.getOrDefault(e, 0);
+        pC.put(e, count+1);
+        int maxium = api.getFiles().getAC().getInt(p+".amount.max", 5);
+        if(!iAD(e, "mechanics", p+".amount", true) && (count >= maxium)) {
+        	flagLater(true, e, "Exceeds maxium amount of packets!", "Mechanics [Abilities]", "[packets:"+count+"/"+maxium+"] [allowedFlight:"+allowedFlight+"] [flying:"+flying+"] [creativeMode:"+creativeMode+"] [godMode:"+godMode+"] [gamemode:"+e.getGameMode()+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".amount.vls", 1), "mechanics");
+        	if(api.getFiles().getAC().getBoolean(p+".amount.kick", false)) packetExceeded(e);
+        	return true;
+        }
+        return false;
+	}
+
 	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void onAbilitiest(AbilitiesEvent ev) {
 		if (ev.isCancelled()) return;
 		Player e = ev.getPlayer();
+        // Counted in onPacket, which also enforces the limit.
         int count = pC.getOrDefault(e, 0);
-        pC.put(e, count+1);
         int maxium = api.getFiles().getAC().getInt(p+".amount.max", 5);
         boolean onground = true;
         if(api.getFiles().getAC().getBoolean(p+".onground", false)) { onground = e.isOnGround(); }
@@ -37,16 +51,9 @@ public class Abilities extends FoxPlayer implements Listener {
         boolean creativeMode = ev.getCreativeMode().orElse(false);
         boolean godMode = ev.getGodMode().orElse(false);
         
-        if(!iAD(e, "mechanics", p+".amount", true) && (count >= maxium)) {
-        	ev.setCancelled(true);
-        	flag(true, e, "Exceeds maxium amount of packets!", "Mechanics [Abilities]", "[packets:"+count+"/"+maxium+"] [allowedFlight:"+allowedFlight+"] [flying:"+flying+"] [creativeMode:"+creativeMode+"] [godMode:"+godMode+"] [gamemode:"+e.getGameMode()+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".amount.vls", 1), "mechanics");
-        	if(api.getFiles().getAC().getBoolean(p+".amount.kick", false)) packetExceeded(e);
-        	return;
-        }
-        
     	boolean de = true;
     	boolean iv = false;
-    	if(api.getFiles().getAC().getBoolean(p+".checks.allowedflight.ignore_velocity", true)) { if(e.getVelocity().getX() > 0.0 || e.getVelocity().getY() > 0.0 || e.getVelocity().getZ() > 0.0) { de = false; } }
+    	if(api.getFiles().getAC().getBoolean(p+".checks.allowedflight.ignore_velocity", true)) { if(hasExternalVelocity(e, e.getVelocity())) { de = false; } }
     	if(de) { iv = true; }
         
         if(allowedFlight && (!flying && !creativeMode && !godMode) && !iv && onground && !iAD(e, "mechanics", p+".checks.allowedflight", true)) {

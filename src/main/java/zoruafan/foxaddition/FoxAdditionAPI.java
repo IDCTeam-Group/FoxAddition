@@ -71,9 +71,6 @@ public enum FoxAdditionAPI {
 	}
 	
 	protected void enable(JavaPlugin plugin) {
-		try {
-	        packetListener = PacketEvents.getAPI().getEventManager().registerListener((PacketListener) new FoxPacketListener(), PacketListenerPriority.HIGHEST);
-		} catch (Exception e) {}
 		Object[] checks = {
 				new FoxPlayer(),
 				new Abilities(),
@@ -99,6 +96,9 @@ public enum FoxAdditionAPI {
                 Bukkit.getServer().getPluginManager().registerEvents((Listener) obj, plugin);
             }
         }
+		try {
+	        packetListener = PacketEvents.getAPI().getEventManager().registerListener((PacketListener) new FoxPacketListener(checks), PacketListenerPriority.HIGHEST);
+		} catch (Exception e) {}
 		this.dsrv = new DiscordSRVManager();
         this.vlsystem = new VLSystem();
         Bukkit.getServer().getPluginManager().registerEvents(this.vlsystem, plugin);
@@ -106,6 +106,7 @@ public enum FoxAdditionAPI {
 	
 	protected void disable(JavaPlugin plugin) {
 		if (vlsystem != null) vlsystem.shutdown();
+		if (log != null) log.shutdown();
 		// Only remove our own listener; terminating would shut PacketEvents down for all plugins.
 		try { if (packetListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(packetListener); } catch (Exception e) {}
         try { Bukkit.getServer().getMessenger().unregisterIncomingPluginChannel(plugin, "minecraft:brand"); } catch (Exception e) {}
@@ -159,8 +160,11 @@ public enum FoxAdditionAPI {
             if (responseCode == 200) {
                 String currentVersion = plugin.getDescription().getVersion();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String latestVersion = reader.readLine();
-                if (!latestVersion.equals(currentVersion)) {
+                String latestVersion = String.valueOf(reader.readLine()).trim();
+                int cmp = compareVersions(currentVersion, latestVersion);
+                if (cmp > 0) {
+                    plugin.getLogger().info("[UPDATER] You are running "+currentVersion+", which is newer than the latest release ("+latestVersion+").");
+                } else if (cmp < 0) {
                     plugin.getLogger().warning("[UPDATER] A new version of this plugin has been found.");
                     plugin.getLogger().warning("[UPDATER] Your version is: "+currentVersion);
                     plugin.getLogger().warning("[UPDATER] Latest version is: "+latestVersion);
@@ -173,6 +177,26 @@ public enum FoxAdditionAPI {
             connection.disconnect();
         }
         catch (Exception e) { plugin.getLogger().warning("[UPDATER] Failed to check for new updates!"); }
+    }
+    
+    // Compares the numeric part first; a pre-release such as 1.2.3-beta.2 is older than 1.2.3 but newer than 1.2.2.
+    static int compareVersions(String a, String b) {
+        String[] pa = a.split("-", 2), pb = b.split("-", 2);
+        String[] na = pa[0].split("\\."), nb = pb[0].split("\\.");
+        for (int i = 0; i < Math.max(na.length, nb.length); i++) {
+            int x = i < na.length ? leadingNumber(na[i]) : 0;
+            int y = i < nb.length ? leadingNumber(nb[i]) : 0;
+            if (x != y) return Integer.compare(x, y);
+        }
+        boolean preA = pa.length > 1, preB = pb.length > 1;
+        if (preA != preB) return preA ? -1 : 1;
+        return preA ? pa[1].compareToIgnoreCase(pb[1]) : 0;
+    }
+    
+    private static int leadingNumber(String s) {
+        int i = 0;
+        while (i < s.length() && Character.isDigit(s.charAt(i))) i++;
+        try { return i == 0 ? 0 : Integer.parseInt(s.substring(0, i)); } catch (NumberFormatException e) { return 0; }
     }
 	
     public Set<Player> getTrackedPlayers() { return fVLS.keySet(); }
@@ -209,5 +233,8 @@ public enum FoxAdditionAPI {
     public double getTPS() {
     	double[] tps = TPSUtil.getRecentTPS();
     	return Math.round(tps[0]*10.0)/10.0;
+    }
+    public double getTPS(Player player) {
+    	return Math.round(TPSUtil.getTPS(player)*10.0)/10.0;
     }
 }

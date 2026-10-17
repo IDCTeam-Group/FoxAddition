@@ -28,7 +28,14 @@ public class FilesManager {
 	private FileConfiguration checks;
 	private FileConfiguration anticheats;
 	private final MiniMessage miniMessage = MiniMessage.miniMessage();
-	private final LegacyComponentSerializer legacySerializer = LegacyComponentSerializer.legacyAmpersand();
+	// Hex colors need 1.16+ (&x&r&r&g&g&b&b); older servers get the closest legacy color instead.
+	private final LegacyComponentSerializer legacySerializer = supportsHex()
+			? LegacyComponentSerializer.builder().character('&').hexColors().useUnusualXRepeatedCharacterHexFormat().build()
+			: LegacyComponentSerializer.legacyAmpersand();
+	
+	private static boolean supportsHex() {
+		try { net.md_5.bungee.api.ChatColor.class.getMethod("of", String.class); return true; } catch (Throwable e) { return false; }
+	}
 
 	public FilesManager() {
 		//this.setup("hooks");
@@ -140,6 +147,12 @@ public class FilesManager {
             return input;
         }
     }
+    public String getKickMessage(final String key, final String def) {
+        String message = lang == null ? null : lang.getString("messages.kick." + key);
+        if (message == null || message.isEmpty()) message = def;
+        return ChatColor.translateAlternateColorCodes('&', convertToLegacy(message));
+    }
+    
     public String getPrefix() {
         if (lang == null) return "";
         try {

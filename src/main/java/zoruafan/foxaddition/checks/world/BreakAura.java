@@ -54,7 +54,6 @@ public class BreakAura extends FoxPlayer implements Listener {
 		
 		String block = "";
 		if (nB.getType().name().toLowerCase().contains("bed") && !iAD(e, "world", p+".bed", true)) {
-			e.sendMessage("aDSL:"+aDSL(e, nBL));
 			block = "bed";
 		}
 		
@@ -91,7 +90,6 @@ public class BreakAura extends FoxPlayer implements Listener {
     private boolean iDS(Player e, World w, int x, int y, int z) {
         Block lSB = w.getBlockAt(x, y, z);
         Block uSB = w.getBlockAt(x, (int) (y + 0.5), z);
-        e.sendMessage("lSB: "+lSB.getType()+" / uSB:"+uSB.getType());
         
         
         //if (isSlab(lowerSlabBlock) && isSlab(upperSlabBlock)) {

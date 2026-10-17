@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.protocol.world.BlockFace;
+import com.github.retrooper.packetevents.util.Vector3f;
 import com.github.retrooper.packetevents.util.Vector3i;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -17,9 +18,10 @@ public class BlockPlaceEvent extends Event implements Cancellable {
 	Block block;
 	long sequence;
 	InteractionHand hand;
+	Vector3f cursor;
 	private boolean cancelled;
 	  
-	public BlockPlaceEvent(Player player, Vector3i blockPosition, BlockFace face, long sequence, InteractionHand hand) {
+	public BlockPlaceEvent(Player player, Vector3i blockPosition, BlockFace face, long sequence, InteractionHand hand, Vector3f cursor) {
 		// Always fired from the player's tick thread (see FoxPacketListener#runSync); an async flag makes Paper reject the event.
 		super(false);
 		
@@ -28,6 +30,11 @@ public class BlockPlaceEvent extends Event implements Cancellable {
         this.face = face;
         this.sequence = sequence;
         this.hand = hand;
+        this.cursor = cursor;
+	}
+	
+	public Vector3f getCursorPosition() {
+		return this.cursor;
 	}
 
 	public Player getPlayer() {

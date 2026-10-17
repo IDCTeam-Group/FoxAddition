@@ -1,13 +1,11 @@
 package zoruafan.foxaddition.checks.badpackets;
 
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import zoruafan.foxaddition.FoxAdditionAPI;
 import zoruafan.foxaddition.utils.FoxPlayer;
-import zoruafan.foxaddition.utils.listeners.HeldItemEvent;
 
 public class BadPacketsE extends FoxPlayer implements Listener {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
@@ -16,15 +14,13 @@ public class BadPacketsE extends FoxPlayer implements Listener {
 	
 	public BadPacketsE() {}
 	
-	@EventHandler
-	public void onHeldItem(HeldItemEvent ev) {
-		if (ev.isCancelled()) return;
-		Player e = ev.getPlayer();
-		int slot = ev.getSlot();
+	// Runs on the netty thread from FoxPacketListener, before the server handles the packet, so the
+	// return value can still cancel it. Flags and Bukkit calls are moved to the player's thread.
+	public boolean onPacket(Player e, int slot) {
 		if ((slot > 8 || slot < 0) && !iAD(e, "badpackets", p, true)) {
-        	flag(false, e, "Sending held item packet with an invalid slot ID.", "BadPackets (Packets) [E]", "[slot:"+slot+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 4), "badpackets");
-        	ev.setCancelled(true);
-        	return;
+        	flagLater(false, e, "Sending held item packet with an invalid slot ID.", "BadPackets (Packets) [E]", "[slot:"+slot+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 4), "badpackets");
+        	return true;
 		}
+		return false;
 	}
 }

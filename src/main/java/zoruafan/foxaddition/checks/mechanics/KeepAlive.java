@@ -3,13 +3,11 @@ package zoruafan.foxaddition.checks.mechanics;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import io.github.retrooper.packetevents.util.folia.FoliaScheduler;
 import zoruafan.foxaddition.FoxAdditionAPI;
 import zoruafan.foxaddition.utils.FoxPlayer;
-import zoruafan.foxaddition.utils.listeners.KeepAliveEvent;
 
 public class KeepAlive extends FoxPlayer implements Listener {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
@@ -22,32 +20,30 @@ public class KeepAlive extends FoxPlayer implements Listener {
 		FoliaScheduler.getGlobalRegionScheduler().runAtFixedRate(plugin, (ignored) -> pC.clear(), 20, 20);
 	}
 
-	@EventHandler
-	public void onKeepAlive(KeepAliveEvent ev) {
-		if (ev.isCancelled()) return;
-		Player e = ev.getPlayer();
+	// Runs on the netty thread from FoxPacketListener, before the server handles the packet, so the
+	// return value can still cancel it. Flags and Bukkit calls are moved to the player's thread.
+	public boolean onPacket(Player e, long packetId) {
         int count = pC.getOrDefault(e, 0);
         pC.put(e, count+1);
         int maxium = api.getFiles().getAC().getInt(p+".amount.max", 10);
         final Long id = lastId.get(e);
         if((id != null && id != 0L) && !iAD(e, "mechanics", p+".amount", true) && (count >= maxium)) {
-        	ev.setCancelled(true);
-        	flag(true, e, "Exceeds maxium amount of packets!", "Mechanics [KeepAlive]", "[packets:"+count+"/"+maxium+"]", api.getFiles().getAC().getInt(p+".amount.vls", 1), "mechanics");
+        	flagLater(true, e, "Exceeds maxium amount of packets!", "Mechanics [KeepAlive]", "[packets:"+count+"/"+maxium+"]", api.getFiles().getAC().getInt(p+".amount.vls", 1), "mechanics");
         	if(api.getFiles().getAC().getBoolean(p+".amount.kick", false)) packetExceeded(e);
-        	return;
+        	return true;
         }
         
         if(id == null) {
-        	lastId.put(e, ev.getID());
-        	return;
+        	lastId.put(e, packetId);
+        	return false;
         }
-        if (id > ev.getID() && !iAD(e, "mechanics", p+".checks.decreasing", true)) {
-        	ev.setCancelled(true);
-        	flag(false, e, "Sending decreased value in ID!", "Mechanics [KeepAlive]", "[id:"+id+" -> "+ev.getID()+"]", api.getFiles().getAC().getInt(p+".checks.decreasing.vls", 1), "mechanics");
+        if (id > packetId && !iAD(e, "mechanics", p+".checks.decreasing", true)) {
+        	flagLater(false, e, "Sending decreased value in ID!", "Mechanics [KeepAlive]", "[id:"+id+" -> "+packetId+"]", api.getFiles().getAC().getInt(p+".checks.decreasing.vls", 1), "mechanics");
         	if(api.getFiles().getAC().getBoolean(p+".checks.decreasing.kick", false)) timeOut(e);
-        	return;        	
+        	return true;
         }
-        lastId.put(e, ev.getID());
+        lastId.put(e, packetId);
+        return false;
 	}
 	
 	@Override

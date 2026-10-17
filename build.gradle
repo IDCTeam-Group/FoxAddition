@@ -1,9 +1,10 @@
 plugins {
     id 'java'
+    id 'com.gradleup.shadow' version '8.3.5'
 }
 
 group = 'zoruafan'
-version = '1.2.3-folia-fix'
+version = '1.2.3-beta.2'
 
 repositories {
     mavenCentral()
@@ -13,36 +14,71 @@ repositories {
 	maven { url = 'https://nexus.scarsz.me/content/groups/public/' }
 }
 
+configurations {
+    // The unit tests load plugin classes, which reference the server and packetevents APIs.
+    testImplementation.extendsFrom compileOnly
+}
+
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT'
-    compileOnly 'com.github.retrooper:packetevents-spigot:2.11.0'
+    compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+    compileOnly 'com.github.retrooper:packetevents-spigot:2.14.0'
 	compileOnly 'org.geysermc.geyser:api:2.9.0-SNAPSHOT'
     compileOnly 'org.geysermc.floodgate:api:2.2.0-SNAPSHOT'
 	compileOnly 'com.discordsrv:discordsrv:1.30.3'
     
-    // MiniMessage for modern text formatting
+    // MiniMessage for modern text formatting. Bundled and relocated in shadowJar: Spigot ships
+    // no Adventure at all and packetevents only brings adventure-api.
     implementation 'net.kyori:adventure-text-minimessage:4.17.0'
+    implementation 'net.kyori:adventure-text-serializer-legacy:4.17.0'
     
     compileOnly 'com.github.ben-manes.caffeine:caffeine:3.1.8'
     compileOnly 'com.google.code.gson:gson:2.10.1'
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+    // The compileOnly APIs are built for newer Java than our Java 8 bytecode; that is fine at compile time.
+    disableAutoTargetJvm()
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    // Bytecode for Java 8, so older servers can load the plugin; the toolchain stays on 21.
+    options.release = 8
 }
 
 jar {
-    archiveFileName = 'FoxAddition-Folia.jar'
+    archiveFileName = 'FoxAddition-Folia-plain.jar'
 }
+
+shadowJar {
+    archiveFileName = 'FoxAddition-Folia.jar'
+    relocate 'net.kyori', 'zoruafan.foxaddition.libs.kyori'
+    dependencies {
+        exclude(dependency('org.jetbrains:annotations'))
+    }
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/versions/**'
+}
+
+build.dependsOn shadowJar
 
 processResources {
     filteringCharset = 'UTF-8'
+    // plugin.yml takes its version from here, so there is only one place to bump it.
+    inputs.property 'version', project.version
+    filesMatching('plugin.yml') {
+        expand(version: project.version)
+    }
 }

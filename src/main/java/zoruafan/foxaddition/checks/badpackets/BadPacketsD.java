@@ -4,13 +4,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import zoruafan.foxaddition.FoxAdditionAPI;
 import zoruafan.foxaddition.utils.FoxPlayer;
-import zoruafan.foxaddition.utils.listeners.HeldItemEvent;
 
 public class BadPacketsD extends FoxPlayer implements Listener {
 	FoxAdditionAPI api = FoxAdditionAPI.INSTANCE;
@@ -20,19 +18,15 @@ public class BadPacketsD extends FoxPlayer implements Listener {
 	
 	public BadPacketsD() {}
 	
-	@EventHandler
-	public void onHeldItem(HeldItemEvent ev) {
-		if (ev.isCancelled()) return;
-		Player e = ev.getPlayer();
-		int slot = ev.getSlot();
-		
-		if (slot == last.getOrDefault(e, -1) && !iAD(e, "badpackets", p, true)) {
-        	flag(false, e, "Sending held item packet with the same slot than latest.", "BadPackets (Packets) [D]", "[slot:"+slot+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 4), "badpackets");
-        	if(api.getFiles().getAC().getBoolean(p+".cancel", true)) { ev.setCancelled(true); }
-        	last.put(e, slot);
-        	return;
+	// Runs on the netty thread from FoxPacketListener, before the server handles the packet, so the
+	// return value can still cancel it. Flags and Bukkit calls are moved to the player's thread.
+	public boolean onPacket(Player e, int slot) {
+		Integer previous = last.put(e, slot);
+		if (previous != null && slot == previous && !iAD(e, "badpackets", p, true)) {
+        	flagLater(false, e, "Sending held item packet with the same slot than latest.", "BadPackets (Packets) [D]", "[slot:"+slot+"] [isBedrock:"+api.getGeyser().iB(e)+"]", api.getFiles().getAC().getInt(p+".vls", 4), "badpackets");
+        	return api.getFiles().getAC().getBoolean(p+".cancel", true);
 		}
-		last.put(e, slot);
+		return false;
 	}
 	
 	@Override

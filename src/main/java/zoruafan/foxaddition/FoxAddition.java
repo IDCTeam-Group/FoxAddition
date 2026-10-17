@@ -53,15 +53,7 @@ public final class FoxAddition extends JavaPlugin {
             return;
     	}
 	    try {
-	    	final String bukkitVersion = Bukkit.getBukkitVersion();
-	    	final String[] versionParts = bukkitVersion.split("\\.");
-		  	final String minor = versionParts[1];
-		  	String minor_1;
-		 	if(minor.contains("-")) {
-		    	final String[] minorParts = minor.split("-");
-		     	minor_1 = minorParts[0];
-		  	} else minor_1 = minor;
-		  		if (Integer.parseInt(minor_1) < 7) dFC = true;
+		  		if (isOlderThan17(Bukkit.getBukkitVersion())) dFC = true;
 		  		if (dFC) {
 		  			try {
 		  				getLogger().severe("[CHECK] You're using a old version than 1.7.");
@@ -97,6 +89,15 @@ public final class FoxAddition extends JavaPlugin {
 		} catch (Exception e) {}
 		getCommand("foxaddition").setExecutor((CommandExecutor) new CommandManager());
 		api.checkForUpdates();
+    }
+    
+    // Since 26.1 Minecraft versions are year-based ("26.2"), so only 1.x versions can be older than 1.7.
+    static boolean isOlderThan17(String bukkitVersion) {
+    	final String[] versionParts = bukkitVersion.split("\\.");
+    	if (!versionParts[0].trim().equals("1")) return false;
+    	String minor = versionParts[1];
+    	if (minor.contains("-")) minor = minor.split("-")[0];
+    	return Integer.parseInt(minor) < 7;
     }
     
     private boolean isPresent(String pluginName) {

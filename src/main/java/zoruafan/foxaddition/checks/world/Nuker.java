@@ -109,6 +109,7 @@ public class Nuker extends FoxPlayer implements Listener {
 	        if (b == null) continue;
 	        World w = b.getWorld();
 	        if (w == null) continue;
+	        if (!w.isChunkLoaded(b.getX() >> 4, b.getZ() >> 4)) return null;
 	       	if (b.getType() != Material.AIR && b.getType().isSolid()) return b.getLocation();
 	    }
 		return null;
